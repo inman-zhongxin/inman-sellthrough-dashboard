@@ -1818,7 +1818,7 @@ function fmtCell(v) {
 }
 
 // Python端计算的标签/类目成本数据
-const LABEL_COST_DATA = {"畅销款": 7313630.01, "平销款": 2338527.84, "爆款": 3424501.38, "策略款": 1133226.93, "滞销款": 5486978.42, "线下款": 2469.28, "奥莱款": 0.0, "清仓款": 0.0, "#N/A": 0.0, "新品": 0.0, "": 0.0};
+const LABEL_COST_DATA = {"畅销款": 7313630.01, "平销款": 2338527.84, "爆款": 3424501.38, "策略款": 1133226.93, "滞销款": 5486978.42, "线下款": 2469.28, "奥莱款": 0.0, "清仓款": 0.0, "新品": 0.0};
 const LABEL_ST_DATA = {"畅销款": 72.0, "滞销款": 65.5, "爆款": 72.7, "平销款": 71.4, "策略款": 66.4, "线下款": 82.5, "奥莱款": 0, "清仓款": 0, "#N/A": 0, "新品": 100.0, "": 100.0};
 const LABEL_PREV_ST_DATA = {"畅销款": 63.5, "滞销款": 58.5, "爆款": 64.8, "平销款": 63.4, "策略款": 60.6, "线下款": 75.8, "奥莱款": 0, "清仓款": 0, "#N/A": 0, "新品": 100.0, "": 0};
 const LABEL_PREV_COST_DATA = {"畅销款": 8951901.86620462, "滞销款": 6300178.766496125, "爆款": 4139607.568234007, "平销款": 2906218.177747518, "策略款": 1269821.1072078221, "线下款": 3423.32, "奥莱款": 0.0, "清仓款": 0.0, "#N/A": 0.0, "新品": 0.0, "": 0};
@@ -1953,7 +1953,7 @@ function updateStOverview() {
 
 function renderLabelStCostTable() {
   const container = document.getElementById('labelStCostTable');
-  const labels = Object.keys(LABEL_COST_DATA).filter(l => l !== '#N/A' && (window.innerWidth >= 769 || l !== '清仓款')).sort((a, b) => LABEL_COST_DATA[b] - LABEL_COST_DATA[a]);
+  const labels = Object.keys(LABEL_COST_DATA).filter(l => l && l !== '#N/A' && (window.innerWidth >= 769 || l !== '清仓款')).sort((a, b) => LABEL_COST_DATA[b] - LABEL_COST_DATA[a]);
   const baseItems = getFilteredByOverviewExcl();
   // 预计算各标签的筛选后成本，用于进度条归一化
   const labelCosts = {};

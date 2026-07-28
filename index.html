@@ -3571,6 +3571,15 @@ if (document.readyState === 'loading') {
   var LOG_API_BASE = null;
   var API_AUTH_TOKEN = '';
 
+  // 简易哈希函数：用于检测密码是否变更（非加密用途）
+  function simpleHash(str) {
+    var h = 0;
+    for (var i = 0; i < str.length; i++) { h = ((h << 5) - h) + str.charCodeAt(i); h |= 0; }
+    return h.toString(36);
+  }
+  function hashPassword() { return simpleHash(getPassword()); }
+  function hashAdminPassword() { return simpleHash(getAdminPassword()); }
+
   function getStorage() {
     try { var raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : {}; } catch(e) { return {}; }
   }
@@ -3637,7 +3646,7 @@ if (document.readyState === 'loading') {
   window.__security_getRegistration = getRegistration;
   window.__security_setRegistration = setRegistration;
 
-  // 初始化：判断是否已登记
+  // 初始化：判断是否已登记 → 密码是否未变 → 自动跳过登录
   function initFlow() {
     var reg = getRegistration();
     var regForm = document.getElementById('regForm');
@@ -3645,7 +3654,25 @@ if (document.readyState === 'loading') {
     var subtitle = document.getElementById('loginSubtitle');
 
     if (reg && reg.huaname) {
-      // 已登记过 → 直接显示密码登录
+      // 已登记 → 检查密码是否自上次验证后发生过变化
+      var storedHash = getStorage().authHash || '';
+      var currentHash = hashPassword();
+      if (storedHash && storedHash === currentHash) {
+        // 密码未变 → 自动登录，跳过门禁
+        document.getElementById('securityOverlay').classList.add('hidden');
+        // 如果存储了管理员哈希且匹配 → 恢复管理员模式
+        var storedAdminHash = getStorage().adminAuthHash || '';
+        if (storedAdminHash && storedAdminHash === hashAdminPassword()) {
+          __isAdminMode = true;
+          document.getElementById('adminFloatBtn').classList.remove('hidden');
+        }
+        setTimeout(function() {
+          var searchInput = document.getElementById('filterSearch');
+          if (searchInput) searchInput.focus();
+        }, 300);
+        return;
+      }
+      // 密码已变更（或首次登录）→ 显示密码输入框
       regForm.style.display = 'none';
       loginForm.style.display = 'block';
       subtitle.textContent = '欢迎回来，' + reg.huaname + ' · 请输入密码';
@@ -3765,13 +3792,24 @@ function handleLogin() {
     });
   }
 
+  // 保存密码哈希 → 下次访问自动跳过登录（除非密码被管理员修改）
+  function saveAuthHash(adminToo) {
+    var s = JSON.parse(localStorage.getItem('inman_dashboard_access') || '{}');
+    s.authHash = simpleHash(window.__security_getPassword());
+    if (adminToo) {
+      s.adminAuthHash = simpleHash(window.__security_getAdminPassword());
+    }
+    localStorage.setItem('inman_dashboard_access', JSON.stringify(s));
+  }
+
   if (__isAdminMode) {
     // 管理员模式 → 用管理员密码验证
     var adminPwd = window.__security_getAdminPassword();
     if (pwd === adminPwd) {
       err.classList.remove('show');
-      // 管理员登录成功 → 记录日志 + 进入仪表盘 + 显示 ⚙ 按钮
+      // 管理员登录成功 → 记录日志 + 保存双哈希 + 进入仪表盘 + 显示 ⚙ 按钮
       recordLogin();
+      saveAuthHash(true);
       document.getElementById('securityOverlay').classList.add('hidden');
       document.getElementById('adminFloatBtn').classList.remove('hidden');
       // 首次进入显示提示条
@@ -3795,8 +3833,9 @@ function handleLogin() {
     var correctPwd = window.__security_getPassword();
     if (pwd === correctPwd) {
       err.classList.remove('show');
-      // 普通用户登录成功 → 记录日志 + 进入仪表盘（不显示 ⚙ 按钮）
+      // 普通用户登录成功 → 记录日志 + 保存哈希 + 进入仪表盘（不显示 ⚙ 按钮）
       recordLogin();
+      saveAuthHash(false);
       document.getElementById('securityOverlay').classList.add('hidden');
       // ⚙ 按钮保持隐藏
       setTimeout(function() {
@@ -3947,7 +3986,15 @@ function changeAdminPassword(type) {
     document.getElementById('adminConfirmPwd').value = '';
   }
 
-  msg.textContent = '✅ ' + label + '密码修改成功！';
+  // 密码已变更 → 清除所有"记住登录"的哈希，所有人下次访问需重新输入
+  (function() {
+    var s = JSON.parse(localStorage.getItem('inman_dashboard_access') || '{}');
+    delete s.authHash;
+    delete s.adminAuthHash;
+    localStorage.setItem('inman_dashboard_access', JSON.stringify(s));
+  })();
+
+  msg.textContent = '✅ ' + label + '密码修改成功！所有人下次访问需重新输入密码';
   msg.className = 'admin-msg';
 }
 

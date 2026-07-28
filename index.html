@@ -1892,6 +1892,8 @@ Chart.defaults.color = '#5A7A78';
 const dataLabelPlugin = {
   id: 'customDataLabels',
   afterDraw(chart) {
+    // 尊重 chart.options.plugins.customDataLabels 开关（false=不画标签）
+    if (chart.options.plugins && chart.options.plugins.customDataLabels === false) return;
     const ctx = chart.ctx;
     chart.data.datasets.forEach((dataset, i) => {
       const meta = chart.getDatasetMeta(i);
@@ -2251,7 +2253,7 @@ function updateCatStChart() {
     options: {
       responsive: true,
       plugins: { 
-        customDataLabels: isWide2,
+        customDataLabels: false,
         legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } }
       },
       scales: {
@@ -3057,53 +3059,10 @@ if (document.readyState === 'loading') {
   setTimeout(__runDeferred, 50);
 }
 
-// ====== 工作建议（成本导向） ======
+// ====== 工作建议（异步加载中，initApp 完成后重渲染） ======
 (function() {
   var wb = document.getElementById('workBox');
-  var adjC = 555;
-  var stR = 68.8;
-  var totalCost = 19699334;
-  var labC = {};
-  var catC = {};
-  ITEMS.forEach(function(it) {
-    labC[it.label] = (labC[it.label] || 0) + 1;
-    catC[it.cat] = (catC[it.cat] || 0) + 1;
-  });
-  var dressC = catC['连衣裙'] || 0;
-  var shirtC = catC['衬衣'] || 0;
-  var newC = labC['新品'] || 0;
-  var keepC = ITEMS.filter(function(it) { return it.strategy === '留明年'; }).length;
-  var costStr = totalCost >= 10000 ? (totalCost/10000).toFixed(0) + '万' : Math.round(totalCost).toString();
-  // 动态计算距8月31日天数
-  var now = new Date();
-  var aug31 = new Date(now.getFullYear(), 7, 31);
-  var daysLeft = Math.max(0, Math.ceil((aug31 - now) / (1000 * 60 * 60 * 24)));
-  
-  wb.innerHTML =
-    '<div style="margin-bottom:10px;">' +
-    '<h3 style="font-size:14px;font-weight:600;color:var(--teal-dark);margin-bottom:10px;">🎯 成本导向行动建议</h3>' +
-    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">' +
-    '<div style="background:var(--teal-ultra-light);border-radius:8px;padding:10px;text-align:center;">' +
-    '<div style="font-size:18px;font-weight:700;color:var(--teal-deep);">' + stR + '%</div>' +
-    '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">当前售罄率</div></div>' +
-    '<div style="background:var(--teal-ultra-light);border-radius:8px;padding:10px;text-align:center;">' +
-    '<div style="font-size:18px;font-weight:700;color:var(--color-warning);">¥' + costStr + '</div>' +
-    '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">剩余库存成本</div></div>' +
-    '<div style="background:var(--teal-ultra-light);border-radius:8px;padding:10px;text-align:center;">' +
-    '<div style="font-size:18px;font-weight:700;color:var(--color-info);">' + daysLeft + '天</div>' +
-    '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">距8月31日</div></div></div>' +
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
-    '<div style="background:#fff3e0;border-radius:8px;padding:12px;border-left:3px solid #D05A4A;">' +
-    '<div style="font-size:13px;font-weight:600;color:#D05A4A;margin-bottom:6px;">🔴 紧急 · 调价出清</div>' +
-    '<div style="font-size:12px;color:var(--text-primary);">' +
-    '滞销款调价清仓 · <strong>' + adjC + '款</strong> 需执行</div>' +
-    '<div style="font-size:12px;color:var(--text-primary);margin-top:4px;">优先处理连衣裙(<strong>' + dressC + '款</strong>)、衬衣(<strong>' + shirtC + '款</strong>)<br><span style="color:var(--text-light);font-size:11px;">— 剩余成本最高</span></div></div>' +
-    '<div style="background:#f0faf9;border-radius:8px;padding:12px;border-left:3px solid var(--teal-primary);">' +
-    '<div style="font-size:13px;font-weight:600;color:var(--teal-deep);margin-bottom:6px;">🟢 常规 · 持续优化</div>' +
-    '<div style="font-size:12px;color:var(--text-primary);">' +
-    '· 每周更新售罄率数据，追踪进度</div>' +
-    '<div style="font-size:12px;color:var(--text-primary);margin-top:2px;">· 新品上市 <strong>' + newC + '款</strong> 观察市场反馈</div>' +
-    '<div style="font-size:12px;color:var(--text-primary);margin-top:2px;">· 留明年 <strong>' + keepC + '款</strong> — 入库保管，来年上架</div></div></div>';
+  wb.innerHTML = '<div style="text-align:center;padding:30px 20px;color:var(--text-secondary);font-size:13px;">⏳ 数据加载中，策略分析即将呈现...</div>';
 })();
 
 // ====== 表格 ======
@@ -4079,14 +4038,22 @@ document.addEventListener('keydown', function(e) {
             '<div style="font-size:12px;color:var(--text-primary);margin-top:2px;">· 留明年 <strong>' + keepC + '款</strong> — 入库保管，来年上架</div></div></div>';
         }
       }
-    } catch(e) { console.log('[Loader] workBox init skipped:', e.message); }
+    } catch(e) { console.log('[Loader] workBox init error:', e.message); }
     
-    // 触发图表初始化
+    // 触发图表和表格重渲染（已跳过 initMultiSelects，避免重复初始化）
     try {
-      if (typeof __runDeferred === 'function') __runDeferred();
+      if (typeof updateStDistChart === 'function') updateStDistChart();
+      if (typeof updateCatStChart === 'function') updateCatStChart();
+      if (typeof updateCatCostPieChart === 'function') updateCatCostPieChart();
+      // 店铺销售表需要等 MultiSelect 就绪后再渲染
+      setTimeout(function() {
+        try { if (typeof renderStoreSalesTable === 'function') renderStoreSalesTable(); } catch(e) {}
+      }, 450);
+      // 标签售罄进度表也重刷
+      try { if (typeof renderLabelStCostTable === 'function') renderLabelStCostTable(); } catch(e) {}
     } catch(e) { console.log('[Loader] deferred init error:', e.message); }
     
-    // 触发表格渲染
+    // 触发全部明细表渲染
     try {
       if (typeof filterData === 'function') filterData();
     } catch(e) { console.log('[Loader] filterData error:', e.message); }

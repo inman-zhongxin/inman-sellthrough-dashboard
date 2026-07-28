@@ -1324,7 +1324,7 @@ tr:nth-child(even):hover td {
   <div class="loading-text">正在加载数据...</div>
   <div class="loading-sub">茵曼数字零售中心 · 售罄进度仪表盘</div>
 </div>
-<div id="securityOverlay" class="security-overlay">
+<div id="securityOverlay" class="security-overlay hidden">
   <div class="security-box">
     <!-- Step 1: 访客登记（仅首次需要） -->
     <div id="regForm" class="reg-form" style="display:block;">
@@ -3661,41 +3661,13 @@ if (document.readyState === 'loading') {
   window.__security_getRegistration = getRegistration;
   window.__security_setRegistration = setRegistration;
 
-  // 初始化：判断是否已登记 → 密码是否未变 → 自动跳过登录
+  // 初始化：密码门禁已禁用 → 直接跳过（2026-07-28 用户要求取消密码）
   function initFlow() {
-    var reg = getRegistration();
-    var regForm = document.getElementById('regForm');
-    var loginForm = document.getElementById('loginForm');
-    var subtitle = document.getElementById('loginSubtitle');
-
-    if (reg && reg.huaname) {
-      // 已登记 → 检查密码是否自上次验证后发生过变化
-      var storedHash = getStorage().authHash || '';
-      var currentHash = hashPassword();
-      if (storedHash && storedHash === currentHash) {
-        // 密码未变 → 自动登录，跳过门禁
-        document.getElementById('securityOverlay').classList.add('hidden');
-        // 如果存储了管理员哈希且匹配 → 恢复管理员模式
-        var storedAdminHash = getStorage().adminAuthHash || '';
-        if (storedAdminHash && storedAdminHash === hashAdminPassword()) {
-          __isAdminMode = true;
-          document.getElementById('adminFloatBtn').classList.remove('hidden');
-        }
-        setTimeout(function() {
-          var searchInput = document.getElementById('filterSearch');
-          if (searchInput) searchInput.focus();
-        }, 300);
-        return;
-      }
-      // 密码已变更（或首次登录）→ 显示密码输入框
-      regForm.style.display = 'none';
-      loginForm.style.display = 'block';
-      subtitle.textContent = '欢迎回来，' + reg.huaname + ' · 请输入密码';
-    } else {
-      // 首次访问 → 显示登记表
-      regForm.style.display = 'block';
-      loginForm.style.display = 'none';
-    }
+    document.getElementById('securityOverlay').classList.add('hidden');
+    setTimeout(function() {
+      var searchInput = document.getElementById('filterSearch');
+      if (searchInput) searchInput.focus();
+    }, 300);
   }
 
   if (document.readyState === 'loading') {

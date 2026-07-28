@@ -1448,7 +1448,7 @@ tr:nth-child(even):hover td {
     <span class="header-title">数字零售中心 · 售罄进度仪表盘</span>
   </div>
   <div class="header-right">
-    <span class="date-badge">2026-07-28</span>
+    <span class="date-badge">2026-07-29</span>
     <span>目标售罄率 85%</span>
     <span style="font-size:11px;opacity:0.6;">调价底线 4折</span>
   </div>
@@ -1462,7 +1462,7 @@ tr:nth-child(even):hover td {
   <div class="kpi-card" data-color="teal">
     <div class="kpi-label">整体售罄率</div>
     <div class="kpi-value" style="color:var(--teal-primary)">68.8%</div>
-    <div class="kpi-sub">时间进度 <strong>78.9%</strong> · 落后10.2% · 目标85%</div>
+    <div class="kpi-sub">时间进度 <strong>79.3%</strong> · 落后10.5% · 目标85%</div>
     
   </div>
   <div class="kpi-card" data-color="red">
@@ -1511,8 +1511,8 @@ tr:nth-child(even):hover td {
 <!-- Insight -->
 <div class="insight-box">
   <strong>📌 核心洞察：</strong>
-  整体售罄率 <strong>68.8%</strong>，时间进度 <strong>78.9%</strong>
-  （落后<strong>10.2%</strong>），距目标85%还差 <strong>16.2%</strong>。
+  整体售罄率 <strong>68.8%</strong>，时间进度 <strong>79.3%</strong>
+  （落后<strong>10.5%</strong>），距目标85%还差 <strong>16.2%</strong>。
   剩余库存成本 <strong>¥1969.9万</strong>，
   <strong>59</strong> 款深度积压（¥80.9万）需专项处理。
   当前库存 <strong>26.6万</strong> 件，已售 <strong>63.5万</strong> 件。
@@ -1597,9 +1597,6 @@ tr:nth-child(even):hover td {
     <div class="chart-box">
       <h3>优化优先级矩阵 <span class="hint">含剩余成本权重 · 按综合指数排序</span></h3>
       <canvas id="priorityMatrixChart"></canvas>
-    </div>
-    <div class="chart-box">
-      <div class="work-box" id="workBox"></div>
     </div>
   </div>
 </div>
@@ -1701,7 +1698,7 @@ tr:nth-child(even):hover td {
   </div>
     <div class="store-table-wrap">
     <table style="width:100%;border-collapse:collapse;font-size:11px;">
-      <thead id="storeTableHead"></thead>
+      <thead id="storeTableHead"><tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-secondary);">⏳ 数据加载中...</td></tr></thead>
       <tbody id="platformSalesBody"></tbody>
     </table></div>
   </div>  </div>
@@ -2664,6 +2661,14 @@ function renderStoreSalesTable() {
   var tbody = document.getElementById('platformSalesBody');
   if (!tbody || !thead) return;
   
+  // ====== 防护：数据未就绪时显示加载态，不渲染空表 ======
+  if (!STORE_SALES_DATA || typeof STORE_SALES_DATA !== 'object' || Object.keys(STORE_SALES_DATA).length === 0) {
+    thead.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-secondary);">⏳ 店铺销售数据加载中...</td></tr>';
+    tbody.innerHTML = '';
+    console.log('[StoreTable] STORE_SALES_DATA not ready, showing loading state');
+    return;
+  }
+  
   // 获取多选筛选值
   var labelSel = MSGetSelected('storeLabel');
   var exclSel = MSGetSelected('storeExclusive');
@@ -3058,12 +3063,6 @@ if (document.readyState === 'loading') {
 } else {
   setTimeout(__runDeferred, 50);
 }
-
-// ====== 工作建议（异步加载中，initApp 完成后重渲染） ======
-(function() {
-  var wb = document.getElementById('workBox');
-  wb.innerHTML = '<div style="text-align:center;padding:30px 20px;color:var(--text-secondary);font-size:13px;">⏳ 数据加载中，策略分析即将呈现...</div>';
-})();
 
 // ====== 表格 ======
 let currentSortKey = 's30';
@@ -3998,48 +3997,6 @@ document.addEventListener('keydown', function(e) {
   }
   
   function initApp() {
-    // 重新执行工作建议（依赖 ITEMS）
-    try {
-      if (ITEMS && ITEMS.length > 0) {
-        var wb = document.getElementById('workBox');
-        if (wb) {
-          var labC = {}, catC = {};
-          ITEMS.forEach(function(it) { labC[it.label] = (labC[it.label] || 0) + 1; catC[it.cat] = (catC[it.cat] || 0) + 1; });
-          var dressC = catC['连衣裙'] || 0, shirtC = catC['衬衣'] || 0;
-          var newC = labC['新品'] || 0;
-          var keepC = ITEMS.filter(function(it) { return it.strategy === '留明年'; }).length;
-          var adjC = 555, stR = 68.8;
-          var totalCost = 19699333;
-          var costStr = totalCost >= 10000 ? (totalCost/10000).toFixed(0) + '万' : Math.round(totalCost).toString();
-          var now = new Date(), aug31 = new Date(now.getFullYear(), 7, 31);
-          var daysLeft = Math.max(0, Math.ceil((aug31 - now) / (1000 * 60 * 60 * 24)));
-          wb.innerHTML =
-            '<div style="margin-bottom:10px;">' +
-            '<h3 style="font-size:14px;font-weight:600;color:var(--teal-dark);margin-bottom:10px;">🎯 成本导向行动建议</h3>' +
-            '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">' +
-            '<div style="background:var(--teal-ultra-light);border-radius:8px;padding:10px;text-align:center;">' +
-            '<div style="font-size:18px;font-weight:700;color:var(--teal-deep);">' + stR + '%</div>' +
-            '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">当前售罄率</div></div>' +
-            '<div style="background:var(--teal-ultra-light);border-radius:8px;padding:10px;text-align:center;">' +
-            '<div style="font-size:18px;font-weight:700;color:var(--color-warning);">¥' + costStr + '</div>' +
-            '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">剩余库存成本</div></div>' +
-            '<div style="background:var(--teal-ultra-light);border-radius:8px;padding:10px;text-align:center;">' +
-            '<div style="font-size:18px;font-weight:700;color:var(--color-info);">' + daysLeft + '天</div>' +
-            '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">距8月31日</div></div></div>' +
-            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
-            '<div style="background:#fff3e0;border-radius:8px;padding:12px;border-left:3px solid #D05A4A;">' +
-            '<div style="font-size:13px;font-weight:600;color:#D05A4A;margin-bottom:6px;">🔴 紧急 · 调价出清</div>' +
-            '<div style="font-size:12px;color:var(--text-primary);">滞销款调价清仓 · <strong>' + adjC + '款</strong> 需执行</div>' +
-            '<div style="font-size:12px;color:var(--text-primary);margin-top:4px;">优先处理连衣裙(<strong>' + dressC + '款</strong>)、衬衣(<strong>' + shirtC + '款</strong>)<br><span style="color:var(--text-light);font-size:11px;">— 剩余成本最高</span></div></div>' +
-            '<div style="background:#f0faf9;border-radius:8px;padding:12px;border-left:3px solid var(--teal-primary);">' +
-            '<div style="font-size:13px;font-weight:600;color:var(--teal-deep);margin-bottom:6px;">🟢 常规 · 持续优化</div>' +
-            '<div style="font-size:12px;color:var(--text-primary);">· 每周更新售罄率数据，追踪进度</div>' +
-            '<div style="font-size:12px;color:var(--text-primary);margin-top:2px;">· 新品上市 <strong>' + newC + '款</strong> 观察市场反馈</div>' +
-            '<div style="font-size:12px;color:var(--text-primary);margin-top:2px;">· 留明年 <strong>' + keepC + '款</strong> — 入库保管，来年上架</div></div></div>';
-        }
-      }
-    } catch(e) { console.log('[Loader] workBox init error:', e.message); }
-    
     // 触发图表和表格重渲染（已跳过 initMultiSelects，避免重复初始化）
     try {
       if (typeof updateStDistChart === 'function') updateStDistChart();

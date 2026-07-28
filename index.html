@@ -3046,11 +3046,11 @@ function __runDeferred() {
     renderLabelStCostTable();
   }
   // 延迟渲染图表和表格（错峰启动，避免同时阻塞）
+  // 注意：renderStoreSalesTable 由异步加载器 initApp 统一调用，不在此处执行
   var heavyTasks = [
     { fn: updateStDistChart, name: '售罄率分布图' },
     { fn: updateCatStChart, name: '类目售罄率图' },
-    { fn: updateCatCostPieChart, name: '类目成本饼图' },
-    { fn: renderStoreSalesTable, name: '店铺销售表' }
+    { fn: updateCatCostPieChart, name: '类目成本饼图' }
   ];
   heavyTasks.forEach(function(task, i) {
     setTimeout(function() { try { task.fn(); } catch(e) {} }, 100 + i * 80);
@@ -3997,18 +3997,25 @@ document.addEventListener('keydown', function(e) {
   }
   
   function initApp() {
-    // 触发图表和表格重渲染（已跳过 initMultiSelects，避免重复初始化）
+    // 数据已全部就绪，直接渲染所有图表和表格
     try {
       if (typeof updateStDistChart === 'function') updateStDistChart();
       if (typeof updateCatStChart === 'function') updateCatStChart();
       if (typeof updateCatCostPieChart === 'function') updateCatCostPieChart();
-      // 店铺销售表需要等 MultiSelect 就绪后再渲染
-      setTimeout(function() {
-        try { if (typeof renderStoreSalesTable === 'function') renderStoreSalesTable(); } catch(e) {}
-      }, 450);
-      // 标签售罄进度表也重刷
-      try { if (typeof renderLabelStCostTable === 'function') renderLabelStCostTable(); } catch(e) {}
-    } catch(e) { console.log('[Loader] deferred init error:', e.message); }
+    } catch(e) { console.error('[Loader] Charts init error:', e); }
+    
+    // 店铺销售表：数据已加载，直接渲染（MultiSelect 事件在 DOMContentLoaded 时已绑定）
+    try {
+      if (typeof renderStoreSalesTable === 'function') {
+        renderStoreSalesTable();
+        console.log('[Loader] Store sales table rendered OK');
+      }
+    } catch(e) { console.error('[Loader] Store sales render error:', e); }
+    
+    // 标签售罄进度表
+    try {
+      if (typeof renderLabelStCostTable === 'function') renderLabelStCostTable();
+    } catch(e) { console.log('[Loader] Label table error:', e.message); }
     
     // 触发全部明细表渲染
     try {

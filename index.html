@@ -1448,7 +1448,7 @@ tr:nth-child(even):hover td {
     <span class="header-title">数字零售中心 · 售罄进度仪表盘</span>
   </div>
   <div class="header-right">
-    <span class="date-badge">2026-07-29</span>
+    <span class="date-badge">2026-07-30</span>
     <span>目标售罄率 85%</span>
     <span style="font-size:11px;opacity:0.6;">调价底线 4折</span>
   </div>
@@ -1462,7 +1462,7 @@ tr:nth-child(even):hover td {
   <div class="kpi-card" data-color="teal">
     <div class="kpi-label">整体售罄率</div>
     <div class="kpi-value" style="color:var(--teal-primary)">68.8%</div>
-    <div class="kpi-sub">时间进度 <strong>79.3%</strong> · 落后10.5% · 目标85%</div>
+    <div class="kpi-sub">时间进度 <strong>79.7%</strong> · 落后10.9% · 目标85%</div>
     
   </div>
   <div class="kpi-card" data-color="red">
@@ -1511,8 +1511,8 @@ tr:nth-child(even):hover td {
 <!-- Insight -->
 <div class="insight-box">
   <strong>📌 核心洞察：</strong>
-  整体售罄率 <strong>68.8%</strong>，时间进度 <strong>79.3%</strong>
-  （落后<strong>10.5%</strong>），距目标85%还差 <strong>16.2%</strong>。
+  整体售罄率 <strong>68.8%</strong>，时间进度 <strong>79.7%</strong>
+  （落后<strong>10.9%</strong>），距目标85%还差 <strong>16.2%</strong>。
   剩余库存成本 <strong>¥1969.9万</strong>，
   <strong>59</strong> 款深度积压（¥80.9万）需专项处理。
   当前库存 <strong>26.6万</strong> 件，已售 <strong>63.5万</strong> 件。
@@ -1592,7 +1592,7 @@ tr:nth-child(even):hover td {
   <div class="section-header">
     <h2>📊 店铺销售数据</h2>
     <div style="display:flex;align-items:center;gap:8px;">
-      <span class="hide-mobile section-badge" style="font-size:11px;color:var(--text-light);background:var(--teal-pale);padding:3px 10px;border-radius:4px;">近7天: 2026/07/20 ~ 2026/07/26</span>
+      <span class="hide-mobile section-badge" style="font-size:11px;color:var(--text-light);background:var(--teal-pale);padding:3px 10px;border-radius:4px;">近7天: 2026/07/23 ~ 2026/07/29</span>
       <span class="section-badge">TOP15 · 动态时间 · 标签/专供款/季节/销售状态筛选</span>
     </div>
   </div>
@@ -1626,6 +1626,7 @@ tr:nth-child(even):hover td {
               <label class="ms-opt"> <input type="checkbox" checked value="产业联盟-流转"> 产业联盟-流转</label>
       <label class="ms-opt"> <input type="checkbox" checked value="产业联盟-爆畅新"> 产业联盟-爆畅新</label>
       <label class="ms-opt"> <input type="checkbox" checked value="全网款"> 全网款</label>
+      <label class="ms-opt"> <input type="checkbox" checked value="唯品&拼多多专供款"> 唯品&拼多多专供款</label>
       <label class="ms-opt"> <input type="checkbox" checked value="唯品专供款"> 唯品专供款</label>
       <label class="ms-opt"> <input type="checkbox" checked value="唯品专供款-库存料开款"> 唯品专供款-库存料开款</label>
       <label class="ms-opt"> <input type="checkbox" checked value="天猫/唯品"> 天猫/唯品</label>
@@ -1822,7 +1823,7 @@ const LABEL_PREV_ST_DATA = {"畅销款": 63.5, "滞销款": 58.5, "爆款": 64.8
 const LABEL_PREV_COST_DATA = {"畅销款": 8951901.86620462, "滞销款": 6300178.766496125, "爆款": 4139607.568234007, "平销款": 2906218.177747518, "策略款": 1269821.1072078221, "线下款": 3423.32, "奥莱款": 0.0, "清仓款": 0.0, "#N/A": 0.0, "新品": 0.0, "": 0};
 
 // 近7天日期范围（动态更新）
-var CUM_SALES_DATE_RANGE = '2026/07/20 ~ 2026/07/26';
+var CUM_SALES_DATE_RANGE = '2026/07/23 ~ 2026/07/29';
 if (CUM_SALES_DATE_RANGE && document.getElementById('detailDateRange')) {
   document.getElementById('detailDateRange').textContent =
     '横向滚动 · 点击表头排序 · 近7天: ' + CUM_SALES_DATE_RANGE;
@@ -1834,7 +1835,7 @@ const CAT_ST_DATA = {"连衣裙": 63.6, "衬衣": 69.4, "半身裙": 68.7, "针�
 var STORE_SALES_DATA = {};
 var DAILY_STORE_DATA = {"dates":[],"b0":{},"b1":{},"b2":{},"b3":{},"b4":{},"b5":{},"b6":{},"b7":{},"b8":{},"b9":{},"b10":{},"b11":{},"b12":{},"b13":{},"b14":{}};
 const STORE_LABEL_OPTIONS = ["奥莱款", "平销款", "平销款（线下代卖）", "拼团款", "新品", "清仓款", "滞销款", "爆款", "畅销款", "矩阵款", "策略款", "线下款"];
-const STORE_EXCLUSIVE_OPTIONS = ["产业联盟-流转", "产业联盟-爆畅新", "全网款", "唯品专供款", "唯品专供款-库存料开款", "天猫/唯品", "天猫渠道", "小灯塔-唯品会专供", "抖音专供款-流转", "抖音专供款-爆畅新", "线下款"];
+const STORE_EXCLUSIVE_OPTIONS = ["产业联盟-流转", "产业联盟-爆畅新", "全网款", "唯品&拼多多专供款", "唯品专供款", "唯品专供款-库存料开款", "天猫/唯品", "天猫渠道", "小灯塔-唯品会专供", "抖音专供款-流转", "抖音专供款-爆畅新", "线下款"];
 const STORE_SEASON_OPTIONS = ["冬", "夏", "春", "秋"];
 const STORE_STATUS_OPTIONS = ["#N/A", "26冬在生产", "26冬延续款", "26夏在生产", "26夏延续款", "26春在生产", "26春延续款", "26秋在生产", "26秋延续款", "老款"];
 
@@ -3910,8 +3911,8 @@ document.addEventListener('keydown', function(e) {
 (function() {
   var dataFiles = [
     { key: 'ITEMS', file: 'data/items.json', size: 1153323 },
-    { key: 'STORE_SALES_DATA', file: 'data/store_sales_data.json', size: 1109639 },
-    { key: 'DAILY_STORE_DATA', file: 'data/daily_store_data.json', size: 3398397 }
+    { key: 'STORE_SALES_DATA', file: 'data/store_sales_data.json', size: 1126031 },
+    { key: 'DAILY_STORE_DATA', file: 'data/daily_store_data.json', size: 3530754 }
   ];
   var overlay = document.getElementById('dataLoadingOverlay');
   var loaded = 0, total = dataFiles.length;

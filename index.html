@@ -2858,6 +2858,16 @@ function renderStoreSalesTable() {
     dim = 'label'; dimVals = labelSel;
   }
   
+  // 🔍 DIAGNOSTIC LOG
+  var _diag = [];
+  _diag.push('[DIAG] === Store Sales Diagnostic ===');
+  _diag.push('[DIAG] labelSel=' + JSON.stringify(labelSel) + ' all=' + labelAll + ' opts=' + labelOpts.length);
+  _diag.push('[DIAG] exclSel=' + JSON.stringify(exclSel) + ' all=' + exclAll + ' opts=' + exclOpts.length);
+  _diag.push('[DIAG] statusSel=' + JSON.stringify(statusSel) + ' all=' + statusAll + ' opts=' + statusOpts.length);
+  _diag.push('[DIAG] seasonSel=' + JSON.stringify(seasonSel) + ' all=' + seasonAll + ' opts=' + seasonOpts.length);
+  _diag.push('[DIAG] timePeriod=' + timePeriod + ' resolved dim=' + dim + ' dimVals=' + JSON.stringify(dimVals));
+  _diag.forEach(function(m) { console.log(m); });
+  
   var stores = Object.keys(STORE_SALES_DATA);
   
   // 计算每个店铺的数据
@@ -2875,6 +2885,10 @@ function renderStoreSalesTable() {
     var hbSalesAbs = sCur - sBase;  // 绝对增减销售额
     var hbCostAbs = cCur - cBase;  // 绝对增减成本额
     storeMetrics[s] = { sCur, cCur, mCur, mBase, hbSales, hbCost, hbSalesAbs, hbCostAbs };
+    // 🔍 茵曼旗舰店专项诊断
+    if (s === '茵曼旗舰店') {
+      console.log('[DIAG] 茵曼旗舰店: sCur=¥' + sCur.toFixed(2) + ' cCur=¥' + cCur.toFixed(2) + ' (' + (cCur/10000).toFixed(2) + '万) timePeriod=' + timePeriod);
+    }
   });
   
   // 计算合计成本占比

@@ -3976,8 +3976,9 @@ document.addEventListener('keydown', function(e) {
   }
   
   function loadAll() {
+    var _v = '20260803_1785752815';  // 部署版本号，强制更新缓存
     var promises = dataFiles.map(function(df) {
-      return fetch(df.file, { cache: 'force-cache' })
+      return fetch(df.file + '?v=' + _v, { cache: 'reload' })
         .then(function(r) {
           if (!r.ok) throw new Error('HTTP ' + r.status);
           return r.json();

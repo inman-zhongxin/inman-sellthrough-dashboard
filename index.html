@@ -1448,7 +1448,7 @@ tr:nth-child(even):hover td {
     <span class="header-title">数字零售中心 · 售罄进度仪表盘</span>
   </div>
   <div class="header-right">
-    <span class="date-badge">2026-07-30</span>
+    <span class="date-badge">2026-08-03</span>
     <span>目标售罄率 85%</span>
     <span style="font-size:11px;opacity:0.6;">调价底线 4折</span>
   </div>
@@ -1462,7 +1462,7 @@ tr:nth-child(even):hover td {
   <div class="kpi-card" data-color="teal">
     <div class="kpi-label">整体售罄率</div>
     <div class="kpi-value" style="color:var(--teal-primary)">68.8%</div>
-    <div class="kpi-sub">时间进度 <strong>79.7%</strong> · 落后10.9% · 目标85%</div>
+    <div class="kpi-sub">时间进度 <strong>80.6%</strong> · 落后11.8% · 目标85%</div>
     
   </div>
   <div class="kpi-card" data-color="red">
@@ -1511,8 +1511,8 @@ tr:nth-child(even):hover td {
 <!-- Insight -->
 <div class="insight-box">
   <strong>📌 核心洞察：</strong>
-  整体售罄率 <strong>68.8%</strong>，时间进度 <strong>79.7%</strong>
-  （落后<strong>10.9%</strong>），距目标85%还差 <strong>16.2%</strong>。
+  整体售罄率 <strong>68.8%</strong>，时间进度 <strong>80.6%</strong>
+  （落后<strong>11.8%</strong>），距目标85%还差 <strong>16.2%</strong>。
   剩余库存成本 <strong>¥1969.9万</strong>，
   <strong>59</strong> 款深度积压（¥80.9万）需专项处理。
   当前库存 <strong>26.6万</strong> 件，已售 <strong>63.5万</strong> 件。
@@ -1592,7 +1592,7 @@ tr:nth-child(even):hover td {
   <div class="section-header">
     <h2>📊 店铺销售数据</h2>
     <div style="display:flex;align-items:center;gap:8px;">
-      <span class="hide-mobile section-badge" style="font-size:11px;color:var(--text-light);background:var(--teal-pale);padding:3px 10px;border-radius:4px;">近7天: 2026/07/23 ~ 2026/07/29</span>
+      <span class="hide-mobile section-badge" style="font-size:11px;color:var(--text-light);background:var(--teal-pale);padding:3px 10px;border-radius:4px;">近7天: 2026/07/27 ~ 2026/08/02</span>
       <span class="section-badge">TOP15 · 动态时间 · 标签/专供款/季节/销售状态筛选</span>
     </div>
   </div>
@@ -1823,7 +1823,7 @@ const LABEL_PREV_ST_DATA = {"畅销款": 63.5, "滞销款": 58.5, "爆款": 64.8
 const LABEL_PREV_COST_DATA = {"畅销款": 8951901.86620462, "滞销款": 6300178.766496125, "爆款": 4139607.568234007, "平销款": 2906218.177747518, "策略款": 1269821.1072078221, "线下款": 3423.32, "奥莱款": 0.0, "清仓款": 0.0, "#N/A": 0.0, "新品": 0.0, "": 0};
 
 // 近7天日期范围（动态更新）
-var CUM_SALES_DATE_RANGE = '2026/07/23 ~ 2026/07/29';
+var CUM_SALES_DATE_RANGE = '2026/07/27 ~ 2026/08/02';
 if (CUM_SALES_DATE_RANGE && document.getElementById('detailDateRange')) {
   document.getElementById('detailDateRange').textContent =
     '横向滚动 · 点击表头排序 · 近7天: ' + CUM_SALES_DATE_RANGE;
@@ -3925,8 +3925,8 @@ document.addEventListener('keydown', function(e) {
 (function() {
   var dataFiles = [
     { key: 'ITEMS', file: 'data/items.json', size: 1153323 },
-    { key: 'STORE_SALES_DATA', file: 'data/store_sales_data.json', size: 1126031 },
-    { key: 'DAILY_STORE_DATA', file: 'data/daily_store_data.json', size: 3530754 }
+    { key: 'STORE_SALES_DATA', file: 'data/store_sales_data.json', size: 1139039 },
+    { key: 'DAILY_STORE_DATA', file: 'data/daily_store_data.json', size: 3687688 }
   ];
   var overlay = document.getElementById('dataLoadingOverlay');
   var loaded = 0, total = dataFiles.length;

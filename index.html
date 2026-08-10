@@ -340,6 +340,29 @@ body {
   border: 1px solid var(--border-color);
 }
 
+/* ===== 明细表折叠 ===== */
+.detail-collapsed .filter-bar,
+.detail-collapsed .scroll-table {
+  display: none;
+}
+.detail-toggle-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border: 1px solid var(--teal-primary); border-radius: 6px;
+  background: var(--teal-pale); color: var(--teal-primary);
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: all 0.2s;
+}
+.detail-toggle-btn:hover {
+  background: var(--teal-primary); color: #fff;
+}
+.detail-toggle-btn .arrow {
+  display: inline-block; transition: transform 0.3s;
+  font-size: 10px;
+}
+.detail-expanded .detail-toggle-btn .arrow {
+  transform: rotate(90deg);
+}
+
 .table-header {
   display: flex;
   align-items: center;
@@ -1692,16 +1715,17 @@ tr:nth-child(even):hover td {
   </div>  </div>
 </div>
 
-<!-- Section 5: 明细数据 -->
-<div class="table-wrapper">
+<!-- Section 5: 明细数据（默认折叠，按需展开） -->
+<div class="table-wrapper detail-collapsed" id="detailSection">
   <div class="table-header">
     <h3>📋 全部 2566 款明细</h3>
-    <span style="font-size:12px;color:var(--text-light);" id="detailDateRange">横向滚动 · 点击表头排序</span>
+    <span style="font-size:12px;color:var(--text-light);" id="detailDateRange">点击展开查看 · 横向滚动 · 点击表头排序</span>
     <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
-      <button class="btn-reset" onclick="exportExcel()" style="margin-right:4px;">📥 导出Excel</button>
-      <div class="col-selector-container">
-        <button class="col-selector-btn" onclick="toggleColPanel(event)">📊 列选择</button>
-        <div class="col-selector-panel" id="colPanel">
+      <button class="detail-toggle-btn" id="detailToggleBtn" onclick="toggleDetailTable()">
+        <span>展开明细</span><span class="arrow">▶</span>
+      </button>
+      <button class="btn-reset hide-mobile" onclick="exportExcel()" style="margin-right:4px;">📥 导出Excel</button>
+      <div class="col-selector-container hide-mobile">
           <label><input type="checkbox" checked data-col-idx="0"> 图片</label>
           <label><input type="checkbox" checked data-col-idx="1"> 款号</label>
           <label><input type="checkbox" checked data-col-idx="2"> 类目</label>
@@ -1730,7 +1754,7 @@ tr:nth-child(even):hover td {
     <label>类目</label>
     <select id="filterCat" onchange="debouncedFilter()"><option value="">全部</option><option value="#N/A">#N/A</option><option value="T恤">T恤</option><option value="内衣类">内衣类</option><option value="半身裙">半身裙</option><option value="吊带 背心">吊带 背心</option><option value="围巾类">围巾类</option><option value="外套 上衣">外套 上衣</option><option value="套装">套装</option><option value="牛仔裤">牛仔裤</option><option value="衬衣">衬衣</option><option value="裤子">裤子</option><option value="连衣裙">连衣裙</option><option value="针织衫">针织衫</option><option value="马夹">马夹</option></select>
     <label>策略</label>
-    <select id="filterStrategy" onchange="debouncedFilter()"><option value="">全部</option><option value="人工评估">人工评估</option><option value="已售罄">已售罄</option><option value="已完成">已完成</option><option value="已触底">已触底</option><option value="待观察">待观察</option><option value="无数据">无数据</option><option value="深度积压">深度积压</option><option value="留明年">留明年</option><option value="维持">维持</option><option value="自然售罄">自然售罄</option><option value="调价清仓-7天无动销18%">调价清仓-7天无动销18%</option><option value="调价清仓-7天无动销19%">调价清仓-7天无动销19%</option><option value="调价清仓-7天无动销20%">调价清仓-7天无动销20%</option><option value="调价清仓-7天无动销22%">调价清仓-7天无动销22%</option><option value="调价清仓-7天无动销24%">调价清仓-7天无动销24%</option><option value="调价清仓-7天无动销24%·季末清">调价清仓-7天无动销24%·季末清</option><option value="调价清仓-7天无动销25%">调价清仓-7天无动销25%</option><option value="调价清仓-7天无动销28%">调价清仓-7天无动销28%</option><option value="调价清仓-7天无动销29%·季末清">调价清仓-7天无动销29%·季末清</option><option value="调价清仓-动销·趋势下滑-中幅15%">调价清仓-动销·趋势下滑-中幅15%</option><option value="调价清仓-动销·趋势下滑-中幅15%·季末清">调价清仓-动销·趋势下滑-中幅15%·季末清</option><option value="调价清仓-动销·趋势下滑-中幅20%">调价清仓-动销·趋势下滑-中幅20%</option><option value="调价清仓-动销·趋势下滑-中幅20%·季末清">调价清仓-动销·趋势下滑-中幅20%·季末清</option><option value="调价清仓-动销·趋势放缓-调10%">调价清仓-动销·趋势放缓-调10%</option><option value="调价清仓-动销·趋势放缓-调10%·季末清">调价清仓-动销·趋势放缓-调10%·季末清</option><option value="调价清仓-动销·趋势放缓-调15%">调价清仓-动销·趋势放缓-调15%</option><option value="调价清仓-动销·趋势放缓-调15%·季末清">调价清仓-动销·趋势放缓-调15%·季末清</option><option value="调价清仓-动销·趋势稳定-微调10%">调价清仓-动销·趋势稳定-微调10%</option><option value="调价清仓-动销·趋势稳定-微调10%·季末清">调价清仓-动销·趋势稳定-微调10%·季末清</option><option value="调价清仓-动销·趋势稳定-微调5%">调价清仓-动销·趋势稳定-微调5%</option><option value="调价清仓-动销·趋势稳定-微调5%·季末清">调价清仓-动销·趋势稳定-微调5%·季末清</option><option value="调价清仓-动销·趋势稳定-微调5%·应季留">调价清仓-动销·趋势稳定-微调5%·应季留</option><option value="调价清仓-长期无销-直降4折">调价清仓-长期无销-直降4折</option></select>
+    <select id="filterStrategy" onchange="debouncedFilter()"><option value="">全部</option><option value="人工评估">人工评估</option><option value="已售罄">已售罄</option><option value="已完成">已完成</option><option value="已触底">已触底</option><option value="待观察">待观察</option><option value="无数据">无数据</option><option value="深度积压">深度积压</option><option value="留明年">留明年</option><option value="维持">维持</option><option value="自然售罄">自然售罄</option><option value="调价清仓-7天无动销18%">调价清仓-7天无动销18%</option><option value="调价清仓-7天无动销19%">调价清仓-7天无动销19%</option><option value="调价清仓-7天无动销20%">调价清仓-7天无动销20%</option><option value="调价清仓-7天无动销22%">调价清仓-7天无动销22%</option><option value="调价清仓-7天无动销24%">调价清仓-7天无动销24%</option><option value="调价清仓-7天无动销24%·季末清">调价清仓-7天无动销24%·季末清</option><option value="调价清仓-7天无动销25%">调价清仓-7天无动销25%</option><option value="调价清仓-7天无动销28%">调价清仓-7天无动销28%</option><option value="调价清仓-7天无动销29%·季末清">调价清仓-7天无动销29%·季末清</option><option value="调价清仓-动销·趋势下滑-中幅15%">调价清仓-动销·趋势下滑-中幅15%</option><option value="调价清仓-动销·趋势下滑-中幅15%·季末清">调价清仓-动销·趋势下滑-中幅15%·季末清</option><option value="调价清仓-动销·趋势下滑-中幅20%">调价清仓-动销·趋势下滑-中幅20%</option><option value="调价清仓-动销·趋势下滑-中幅20%·季末清">调价清仓-动销·趋势下滑-中幅20%·季末清</option><option value="调价清仓-动销·趋势放缓-调10%">调价清仓-动销·趋势放缓-调10%</option><option value="调价清仓-动销·趋势放缓-调10%·季末清">调价清仓-动销·趋势放缓-调10%·季末清</option><option value="调价清仓-动销·趋势放缓-调10%·应季留">调价清仓-动销·趋势放缓-调10%·应季留</option><option value="调价清仓-动销·趋势放缓-调15%">调价清仓-动销·趋势放缓-调15%</option><option value="调价清仓-动销·趋势放缓-调15%·季末清">调价清仓-动销·趋势放缓-调15%·季末清</option><option value="调价清仓-动销·趋势稳定-微调10%">调价清仓-动销·趋势稳定-微调10%</option><option value="调价清仓-动销·趋势稳定-微调10%·季末清">调价清仓-动销·趋势稳定-微调10%·季末清</option><option value="调价清仓-动销·趋势稳定-微调5%">调价清仓-动销·趋势稳定-微调5%</option><option value="调价清仓-动销·趋势稳定-微调5%·季末清">调价清仓-动销·趋势稳定-微调5%·季末清</option><option value="调价清仓-长期无销-直降4折">调价清仓-长期无销-直降4折</option></select>
     <label>专供款</label>
     <select id="filterExclusive" onchange="filterTable()"><option value="">全部</option><option value="全网款">全网款</option><option value="产业联盟-流转">产业联盟-流转</option><option value="产业联盟-爆畅新">产业联盟-爆畅新</option><option value="唯品&抖音专供款">唯品&抖音专供款</option><option value="唯品&拼多多专供款">唯品&拼多多专供款</option><option value="唯品专供款">唯品专供款</option><option value="唯品专供款-供货代销">唯品专供款-供货代销</option><option value="唯品专供款-库存料开款">唯品专供款-库存料开款</option><option value="唯品专供款-秋壳转">唯品专供款-秋壳转</option><option value="唯品专供款-线下流转">唯品专供款-线下流转</option><option value="唯品会/抖音DP专供">唯品会/抖音DP专供</option><option value="唯品会/抖音DP专供-库存料开款">唯品会/抖音DP专供-库存料开款</option><option value="唯品会/抖音DP专供-线下流转">唯品会/抖音DP专供-线下流转</option><option value="商品部">商品部</option><option value="天猫/唯品">天猫/唯品</option><option value="天猫/抖音">天猫/抖音</option><option value="天猫渠道">天猫渠道</option><option value="小灯塔-唯品会专供">小灯塔-唯品会专供</option><option value="抖音专供款-流转">抖音专供款-流转</option><option value="抖音专供款-爆畅新">抖音专供款-爆畅新</option><option value="渠道/抖音DP专供">渠道/抖音DP专供</option><option value="线下款">线下款</option></select>
     <label>售罄率</label>
@@ -1819,7 +1843,7 @@ function fmtCell(v) {
 
 // Python端计算的标签/类目成本数据
 const LABEL_COST_DATA = {"畅销款": 5861979.09, "平销款": 2744177.68, "爆款": 3027545.4, "策略款": 1060741.18, "滞销款": 5275829.05, "线下款": 1908.08, "奥莱款": 0.0, "清仓款": 0.0, "新品": 0.0};
-const LABEL_ST_DATA = {"畅销款": 75.5, "滞销款": 69.1, "爆款": 74.8, "平销款": 73.4, "策略款": 68.5, "线下款": 86.5, "奥莱款": 0, "清仓款": 0, "#N/A": 0, "新品": 100.0};
+const LABEL_ST_DATA = {"畅销款": 73.6, "滞销款": 67.3, "爆款": 72.7, "平销款": 73.0, "策略款": 67.1, "线下款": 86.5, "奥莱款": 0, "清仓款": 0, "#N/A": 0, "新品": 100.0};
 const LABEL_PREV_ST_DATA = {"畅销款": 73.0, "滞销款": 65.9, "爆款": 72.2, "平销款": 71.5, "策略款": 66.1, "线下款": 85.7, "奥莱款": 0, "清仓款": 0, "#N/A": 0, "新品": 100.0};
 const LABEL_PREV_COST_DATA = {"畅销款": 5997842.151084746, "滞销款": 5497111.077031854, "爆款": 3085837.9633573717, "平销款": 2887129.2204079763, "策略款": 1091380.2846183458, "线下款": 2020.32, "奥莱款": 0.0, "清仓款": 0.0, "#N/A": 0.0, "新品": 0.0};
 
@@ -1831,7 +1855,7 @@ if (CUM_SALES_DATE_RANGE && document.getElementById('detailDateRange')) {
 }
 const CAT_COST_DATA = {"裤子": 1087643.51, "连衣裙": 5437784.19, "衬衣": 4419330.71, "T恤": 1681066.35, "吊带 背心": 106998.43, "针织衫": 1936621.83, "半身裙": 2175280.2, "牛仔裤": 918472.79, "套装": 177361.76, "外套 上衣": 28891.9, "马夹": 2524.8, "内衣类": 204.0, "围巾类": 0.0, "#N/A": 0.0};
 const TOTAL_REMAINING_COST = 17972180;
-const CAT_ST_DATA = {"连衣裙": 66.2, "衬衣": 72.1, "半身裙": 70.8, "针织衫": 75.3, "T恤": 79.2, "裤子": 72.6, "牛仔裤": 71.2, "套装": 59.9, "吊带 背心": 80.1, "外套 上衣": 68.6, "马夹": 74.6, "内衣类": 99.2, "围巾类": 74.7, "#N/A": 0};
+const CAT_ST_DATA = {"连衣裙": 65.8, "衬衣": 71.7, "半身裙": 71.1, "针织衫": 75.1, "T恤": 79.3, "裤子": 72.3, "牛仔裤": 70.1, "套装": 61.1, "吊带 背心": 81.2, "外套 上衣": 68.6, "马夹": 74.6, "内衣类": 99.2, "围巾类": 0, "#N/A": 0};
 // 店铺销售数据（含标签/专供款维度）
 var STORE_SALES_DATA = {};
 var DAILY_STORE_DATA = {"dates":[],"b0":{},"b1":{},"b2":{},"b3":{},"b4":{},"b5":{},"b6":{},"b7":{},"b8":{},"b9":{},"b10":{},"b11":{},"b12":{},"b13":{},"b14":{}};
@@ -1969,8 +1993,11 @@ function renderLabelStCostTable() {
     const count = items.length;
     const stock = items.reduce(function(s, i) { return s + i.stock; }, 0);
     const cum = items.reduce(function(s, i) { return s + i.init_order; }, 0);
+    const cumCost = items.reduce(function(s, i) { return s + (i.cum_cost || 0); }, 0);
+    const stockCost = items.reduce(function(s, i) { return s + (i.stock_cost || 0); }, 0);
     const cost = labelCosts[label] || 0;
-    const st = cum > 0 ? Math.round((cum - stock) / cum * 1000) / 10 : 0;
+    // 售罄率 = 成本法（金额法）= (期初成本额 - 期末库存成本额) / 期初成本额
+    const st = cumCost > 0 ? Math.round((cumCost - stockCost) / cumCost * 1000) / 10 : 0;
     // 简化：筛选模式下环比数据用静态数据（仅全部时准确）
     const isAll = document.getElementById('stOverviewExclFilter').value === '__all__';
     const prevSt = isAll ? (LABEL_PREV_ST_DATA[label] || 0) : 0;
@@ -2188,10 +2215,11 @@ function updateCatStChart() {
   // 按类目聚合
   const catData = {};
   filtered.forEach(i => {
-    if (!catData[i.cat]) catData[i.cat] = { cum: 0, stock: 0, cost: 0 };
+    if (!catData[i.cat]) catData[i.cat] = { cum: 0, stock: 0, cost: 0, cumCost: 0 };
     catData[i.cat].cum += i.init_order;
     catData[i.cat].stock += i.stock;
     catData[i.cat].cost += i.stock_cost || 0;
+    catData[i.cat].cumCost += i.cum_cost || 0;
   });
   
   const isWide2 = window.innerWidth >= 768;
@@ -2201,7 +2229,8 @@ function updateCatStChart() {
   const cats = catsRaw.filter(c => catData[c].cost >= catCostThreshold);
   const stData = cats.map(c => {
     const d = catData[c];
-    return d.cum > 0 ? Math.round((d.cum - d.stock) / d.cum * 1000) / 10 : 0;
+    // 售罄率 = 成本法（金额法）
+    return d.cumCost > 0 ? Math.round((d.cumCost - d.cost) / d.cumCost * 1000) / 10 : 0;
   });
   const catCounts = cats.map(c => filtered.filter(i => i.cat === c).length);
   
@@ -3256,6 +3285,29 @@ function initImageLazyLoad() {
   }
 })();
 
+// ====== 明细表折叠/展开 ======
+var _detailExpanded = false;
+function toggleDetailTable() {
+  var section = document.getElementById('detailSection');
+  var btn = document.getElementById('detailToggleBtn');
+  _detailExpanded = !_detailExpanded;
+  if (_detailExpanded) {
+    section.classList.remove('detail-collapsed');
+    section.classList.add('detail-expanded');
+    btn.innerHTML = '<span>收起明细</span><span class="arrow">▶</span>';
+    document.getElementById('detailDateRange').textContent = '横向滚动 · 点击表头排序 · ' + ITEMS.length.toLocaleString() + ' 款';
+    // 首次展开时渲染明细表
+    if (document.getElementById('tableBody').children.length === 0) {
+      setTimeout(function() { filterData(); }, 100);
+    }
+  } else {
+    section.classList.add('detail-collapsed');
+    section.classList.remove('detail-expanded');
+    btn.innerHTML = '<span>展开明细</span><span class="arrow">▶</span>';
+    document.getElementById('detailDateRange').textContent = '点击展开查看 · 横向滚动 · ' + ITEMS.length.toLocaleString() + ' 款';
+  }
+}
+
 // ====== 列选择器 ======
 function toggleColPanel(e) {
   e.stopPropagation();
@@ -3922,93 +3974,103 @@ document.addEventListener('keydown', function(e) {
 </div>
 
 <script>
-// ====== 异步数据加载器（性能优化 v2） ======
+// ====== 渐进式数据加载器（性能优化 v3） ======
+// Tier 1: ITEMS → 立即显示概览+图表
+// Tier 2: STORE_SALES_DATA → 店铺销售表
+// Tier 3: DAILY_STORE_DATA → 自定义日期（后台静默加载）
+// Detail: 明细表默认折叠，按需展开
 (function() {
   var dataFiles = [
-    { key: 'ITEMS', file: 'data/items.json', size: 1150915 },
-    { key: 'STORE_SALES_DATA', file: 'data/store_sales_data.json', size: 1165898 },
-    { key: 'DAILY_STORE_DATA', file: 'data/daily_store_data.json', size: 3994932 }
+    { key: 'ITEMS', file: 'data/items.json', size: 1197362, tier: 1 },
+    { key: 'STORE_SALES_DATA', file: 'data/store_sales_data.json', size: 1165898, tier: 2 },
+    { key: 'DAILY_STORE_DATA', file: 'data/daily_store_data.json', size: 3994932, tier: 3 }
   ];
   var overlay = document.getElementById('dataLoadingOverlay');
-  var loaded = 0, total = dataFiles.length;
-  
-  function updateProgress() {
-    loaded++;
-    if (overlay) {
-      var pct = Math.round(loaded / total * 100);
-      overlay.querySelector('.loading-text').textContent = '正在加载数据... ' + pct + '%';
-    }
-  }
+  var _v = '20260810_1786366822';
   
   function hideOverlay() {
     if (overlay) {
       overlay.classList.add('hidden');
-      setTimeout(function() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 500);
+      setTimeout(function() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 400);
     }
   }
   
-  function initApp() {
-    // 数据已全部就绪，直接渲染所有图表和表格
+  function updateOverlayText(msg) {
+    if (overlay) overlay.querySelector('.loading-text').textContent = msg;
+  }
+  
+  // Tier 1: 加载 ITEMS → 立即显示概览
+  function loadTier1() {
+    updateOverlayText('正在加载商品数据...');
+    return fetch(dataFiles[0].file + '?v=' + _v, { cache: 'reload' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        window['ITEMS'] = data;
+        console.log('[Loader] Tier1 OK: ITEMS ' + data.length + ' items');
+        // ITEMS 加载完毕 → 立即显示页面！
+        hideOverlay();
+        initOverview();
+        // 后台加载 Tier 2
+        loadTier2();
+        // 后台加载 Tier 3（不阻塞）
+        loadTier3();
+      })
+      .catch(function(err) {
+        console.error('[Loader] Tier1 failed:', err);
+        hideOverlay();
+        // 即使失败也尝试继续
+        loadTier2();
+        loadTier3();
+      });
+  }
+  
+  // Tier 2: 加载 STORE_SALES_DATA → 店铺销售表
+  function loadTier2() {
+    return fetch(dataFiles[1].file + '?v=' + _v, { cache: 'reload' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        window['STORE_SALES_DATA'] = data;
+        console.log('[Loader] Tier2 OK: STORE_SALES_DATA');
+        try {
+          if (typeof renderStoreSalesTable === 'function') renderStoreSalesTable();
+        } catch(e) { console.warn('[Loader] Store sales render:', e.message); }
+      })
+      .catch(function(err) {
+        console.warn('[Loader] Tier2 failed:', err.message);
+      });
+  }
+  
+  // Tier 3: 后台加载 DAILY_STORE_DATA → 自定义日期功能
+  function loadTier3() {
+    return fetch(dataFiles[2].file + '?v=' + _v, { cache: 'reload' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        window['DAILY_STORE_DATA'] = data;
+        console.log('[Loader] Tier3 OK: DAILY_STORE_DATA ' + (data.dates?data.dates.length:0) + ' dates');
+      })
+      .catch(function(err) {
+        console.warn('[Loader] Tier3 failed:', err.message);
+      });
+  }
+  
+  // 初始化概览（ITEMS 加载完立即执行）
+  function initOverview() {
+    try {
+      if (typeof renderLabelStCostTable === 'function') renderLabelStCostTable();
+    } catch(e) { console.warn('[Loader] Label table:', e.message); }
     try {
       if (typeof updateStDistChart === 'function') updateStDistChart();
       if (typeof updateCatStChart === 'function') updateCatStChart();
       if (typeof updateCatCostPieChart === 'function') updateCatCostPieChart();
-    } catch(e) { console.error('[Loader] Charts init error:', e); }
-    
-    // 店铺销售表：数据已加载，直接渲染（MultiSelect 事件在 DOMContentLoaded 时已绑定）
-    try {
-      if (typeof renderStoreSalesTable === 'function') {
-        renderStoreSalesTable();
-        console.log('[Loader] Store sales table rendered OK');
-      }
-    } catch(e) { console.error('[Loader] Store sales render error:', e); }
-    
-    // 标签售罄进度表
-    try {
-      if (typeof renderLabelStCostTable === 'function') renderLabelStCostTable();
-    } catch(e) { console.log('[Loader] Label table error:', e.message); }
-    
-    // 触发全部明细表渲染
-    try {
-      if (typeof filterData === 'function') filterData();
-    } catch(e) { console.log('[Loader] filterData error:', e.message); }
-    
-    console.log('[Loader] App initialized | ITEMS:' + (ITEMS?ITEMS.length:0) + ' stores:' + (STORE_SALES_DATA?Object.keys(STORE_SALES_DATA).length:0) + ' dates:' + (DAILY_STORE_DATA&&DAILY_STORE_DATA.dates?DAILY_STORE_DATA.dates.length:0));
+    } catch(e) { console.warn('[Loader] Charts:', e.message); }
+    console.log('[Loader] Overview ready | items:' + ITEMS.length);
   }
   
-  function loadAll() {
-    var _v = '20260810_1786361859';  // 部署版本号，强制更新缓存
-    var promises = dataFiles.map(function(df) {
-      return fetch(df.file + '?v=' + _v, { cache: 'reload' })
-        .then(function(r) {
-          if (!r.ok) throw new Error('HTTP ' + r.status);
-          return r.json();
-        })
-        .then(function(data) {
-          window[df.key] = data;
-          updateProgress();
-          console.log('[Loader] Loaded ' + df.key + ' (' + (df.size/1024).toFixed(0) + 'KB)');
-        })
-        .catch(function(err) {
-          console.warn('[Loader] Failed to load ' + df.key + ': ' + err.message + ' — using fallback');
-          updateProgress();
-        });
-    });
-    
-    Promise.all(promises).then(function() {
-      hideOverlay();
-      setTimeout(initApp, 100);
-    }).catch(function() {
-      hideOverlay();
-      setTimeout(initApp, 100);
-    });
-  }
-  
-  // 页面就绪后立即加载数据
+  // 启动
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadAll);
+    document.addEventListener('DOMContentLoaded', loadTier1);
   } else {
-    loadAll();
+    loadTier1();
   }
 })();
 </script>

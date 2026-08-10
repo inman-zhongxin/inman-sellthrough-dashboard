@@ -4,7 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>茵曼数字零售中心 · 售罄进度仪表盘</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/Chart.js/4.4.7/chart.umd.min.js"
+  onerror="var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js';document.head.appendChild(s);">
+</script>
 <style>
 /* ===== 茵曼品牌色系统（Teal 青绿） ===== */
 :root {
@@ -1533,7 +1535,7 @@ tr:nth-child(even):hover td {
     <label>专供款</label>
     <select id="stOverviewExclFilter" onchange="updateStOverview()">
       <option value="__all__">全部</option>
-      
+      <option value="全网款" selected>全网款</option><option value="产业联盟-流转" >产业联盟-流转</option><option value="产业联盟-爆畅新" >产业联盟-爆畅新</option><option value="唯品&抖音专供款" >唯品&抖音专供款</option><option value="唯品&拼多多专供款" >唯品&拼多多专供款</option><option value="唯品专供款" >唯品专供款</option><option value="唯品专供款-供货代销" >唯品专供款-供货代销</option><option value="唯品专供款-库存料开款" >唯品专供款-库存料开款</option><option value="唯品专供款-秋壳转" >唯品专供款-秋壳转</option><option value="唯品专供款-线下流转" >唯品专供款-线下流转</option><option value="唯品会/抖音DP专供" >唯品会/抖音DP专供</option><option value="唯品会/抖音DP专供-库存料开款" >唯品会/抖音DP专供-库存料开款</option><option value="唯品会/抖音DP专供-线下流转" >唯品会/抖音DP专供-线下流转</option><option value="商品部" >商品部</option><option value="天猫/唯品" >天猫/唯品</option><option value="天猫/抖音" >天猫/抖音</option><option value="天猫渠道" >天猫渠道</option><option value="小灯塔-唯品会专供" >小灯塔-唯品会专供</option><option value="抖音专供款-流转" >抖音专供款-流转</option><option value="抖音专供款-爆畅新" >抖音专供款-爆畅新</option><option value="渠道/抖音DP专供" >渠道/抖音DP专供</option><option value="线下款" >线下款</option>
     </select>
   </div>
 
@@ -1559,7 +1561,7 @@ tr:nth-child(even):hover td {
         <label>专供款</label>
         <select id="stDistExclFilter" onchange="updateStDistChart()">
           <option value="__all__">全部</option>
-          
+          <option value="全网款">全网款</option><option value="产业联盟-流转">产业联盟-流转</option><option value="产业联盟-爆畅新">产业联盟-爆畅新</option><option value="唯品&抖音专供款">唯品&抖音专供款</option><option value="唯品&拼多多专供款">唯品&拼多多专供款</option><option value="唯品专供款">唯品专供款</option><option value="唯品专供款-供货代销">唯品专供款-供货代销</option><option value="唯品专供款-库存料开款">唯品专供款-库存料开款</option><option value="唯品专供款-秋壳转">唯品专供款-秋壳转</option><option value="唯品专供款-线下流转">唯品专供款-线下流转</option><option value="唯品会/抖音DP专供">唯品会/抖音DP专供</option><option value="唯品会/抖音DP专供-库存料开款">唯品会/抖音DP专供-库存料开款</option><option value="唯品会/抖音DP专供-线下流转">唯品会/抖音DP专供-线下流转</option><option value="商品部">商品部</option><option value="天猫/唯品">天猫/唯品</option><option value="天猫/抖音">天猫/抖音</option><option value="天猫渠道">天猫渠道</option><option value="小灯塔-唯品会专供">小灯塔-唯品会专供</option><option value="抖音专供款-流转">抖音专供款-流转</option><option value="抖音专供款-爆畅新">抖音专供款-爆畅新</option><option value="渠道/抖音DP专供">渠道/抖音DP专供</option><option value="线下款">线下款</option>
         </select>
       </div>
       <canvas id="stDistChart"></canvas>
@@ -1592,7 +1594,7 @@ tr:nth-child(even):hover td {
   <div class="section-header">
     <h2>📊 店铺销售数据</h2>
     <div style="display:flex;align-items:center;gap:8px;">
-      <span class="hide-mobile section-badge" style="font-size:11px;color:var(--text-light);background:var(--teal-pale);padding:3px 10px;border-radius:4px;">近7天: 2026/07/27 ~ 2026/08/02</span>
+      <span class="hide-mobile section-badge" style="font-size:11px;color:var(--text-light);background:var(--teal-pale);padding:3px 10px;border-radius:4px;">近7天: 2026/08/03 ~ 2026/08/09</span>
       <span class="section-badge">TOP15 · 动态时间 · 标签/专供款/季节/销售状态筛选</span>
     </div>
   </div>
@@ -1603,11 +1605,16 @@ tr:nth-child(even):hover td {
       <div class="ms-trigger" onclick="MSToggle('ms-storeLabel')"><span class="ms-text">全部</span><span class="ms-arrow">▾</span></div>
       <div class="ms-dropdown" style="display:none;">
         <label class="ms-all"><input type="checkbox" checked data-ms-all="1"> 全选</label>
-              <label class="ms-opt"> <input type="checkbox" checked value="平销款"> 平销款</label>
+              <label class="ms-opt"> <input type="checkbox" checked value="奥莱款"> 奥莱款</label>
+      <label class="ms-opt"> <input type="checkbox" checked value="平销款"> 平销款</label>
+      <label class="ms-opt"> <input type="checkbox" checked value="平销款（线下代卖）"> 平销款（线下代卖）</label>
+      <label class="ms-opt"> <input type="checkbox" checked value="拼团款"> 拼团款</label>
       <label class="ms-opt"> <input type="checkbox" checked value="新品"> 新品</label>
+      <label class="ms-opt"> <input type="checkbox" checked value="清仓款"> 清仓款</label>
       <label class="ms-opt"> <input type="checkbox" checked value="滞销款"> 滞销款</label>
       <label class="ms-opt"> <input type="checkbox" checked value="爆款"> 爆款</label>
       <label class="ms-opt"> <input type="checkbox" checked value="畅销款"> 畅销款</label>
+      <label class="ms-opt"> <input type="checkbox" checked value="矩阵款"> 矩阵款</label>
       <label class="ms-opt"> <input type="checkbox" checked value="策略款"> 策略款</label>
       <label class="ms-opt"> <input type="checkbox" checked value="线下款"> 线下款</label>
       </div>
@@ -1623,6 +1630,9 @@ tr:nth-child(even):hover td {
       <label class="ms-opt"> <input type="checkbox" checked value="全网款"> 全网款</label>
       <label class="ms-opt"> <input type="checkbox" checked value="唯品&拼多多专供款"> 唯品&拼多多专供款</label>
       <label class="ms-opt"> <input type="checkbox" checked value="唯品专供款"> 唯品专供款</label>
+      <label class="ms-opt"> <input type="checkbox" checked value="唯品专供款-库存料开款"> 唯品专供款-库存料开款</label>
+      <label class="ms-opt"> <input type="checkbox" checked value="天猫/唯品"> 天猫/唯品</label>
+      <label class="ms-opt"> <input type="checkbox" checked value="天猫渠道"> 天猫渠道</label>
       <label class="ms-opt"> <input type="checkbox" checked value="小灯塔-唯品会专供"> 小灯塔-唯品会专供</label>
       <label class="ms-opt"> <input type="checkbox" checked value="抖音专供款-流转"> 抖音专供款-流转</label>
       <label class="ms-opt"> <input type="checkbox" checked value="抖音专供款-爆畅新"> 抖音专供款-爆畅新</label>
@@ -1635,7 +1645,8 @@ tr:nth-child(even):hover td {
       <div class="ms-trigger" onclick="MSToggle('ms-storeSeason')"><span class="ms-text">全部</span><span class="ms-arrow">▾</span></div>
       <div class="ms-dropdown" style="display:none;">
         <label class="ms-all"><input type="checkbox" checked data-ms-all="1"> 全选</label>
-              <label class="ms-opt"> <input type="checkbox" checked value="夏"> 夏</label>
+              <label class="ms-opt"> <input type="checkbox" checked value="冬"> 冬</label>
+      <label class="ms-opt"> <input type="checkbox" checked value="夏"> 夏</label>
       <label class="ms-opt"> <input type="checkbox" checked value="春"> 春</label>
       <label class="ms-opt"> <input type="checkbox" checked value="秋"> 秋</label>
       </div>
@@ -1646,11 +1657,15 @@ tr:nth-child(even):hover td {
       <div class="ms-trigger" onclick="MSToggle('ms-storeStatus')"><span class="ms-text">全部</span><span class="ms-arrow">▾</span></div>
       <div class="ms-dropdown" style="display:none;">
         <label class="ms-all"><input type="checkbox" checked data-ms-all="1"> 全选</label>
-              <label class="ms-opt"> <input type="checkbox" checked value="#N/A"> #N/A</label>
+              <label class="ms-opt"> <input type="checkbox" checked value="26冬在生产"> 26冬在生产</label>
+      <label class="ms-opt"> <input type="checkbox" checked value="26冬延续款"> 26冬延续款</label>
       <label class="ms-opt"> <input type="checkbox" checked value="26夏在生产"> 26夏在生产</label>
       <label class="ms-opt"> <input type="checkbox" checked value="26夏延续款"> 26夏延续款</label>
       <label class="ms-opt"> <input type="checkbox" checked value="26春在生产"> 26春在生产</label>
+      <label class="ms-opt"> <input type="checkbox" checked value="26春延续款"> 26春延续款</label>
+      <label class="ms-opt"> <input type="checkbox" checked value="26秋在生产"> 26秋在生产</label>
       <label class="ms-opt"> <input type="checkbox" checked value="26秋延续款"> 26秋延续款</label>
+      <label class="ms-opt"> <input type="checkbox" checked value="老款"> 老款</label>
       </div>
     </div></div>
     <div class="filter-item">
@@ -1717,7 +1732,7 @@ tr:nth-child(even):hover td {
     <label>策略</label>
     <select id="filterStrategy" onchange="debouncedFilter()"><option value="">全部</option><option value="人工评估">人工评估</option><option value="已售罄">已售罄</option><option value="已完成">已完成</option><option value="已触底">已触底</option><option value="待观察">待观察</option><option value="无数据">无数据</option><option value="深度积压">深度积压</option><option value="留明年">留明年</option><option value="维持">维持</option><option value="自然售罄">自然售罄</option><option value="调价清仓-7天无动销18%">调价清仓-7天无动销18%</option><option value="调价清仓-7天无动销19%">调价清仓-7天无动销19%</option><option value="调价清仓-7天无动销20%">调价清仓-7天无动销20%</option><option value="调价清仓-7天无动销22%">调价清仓-7天无动销22%</option><option value="调价清仓-7天无动销24%">调价清仓-7天无动销24%</option><option value="调价清仓-7天无动销24%·季末清">调价清仓-7天无动销24%·季末清</option><option value="调价清仓-7天无动销25%">调价清仓-7天无动销25%</option><option value="调价清仓-7天无动销28%">调价清仓-7天无动销28%</option><option value="调价清仓-7天无动销29%·季末清">调价清仓-7天无动销29%·季末清</option><option value="调价清仓-动销·趋势下滑-中幅15%">调价清仓-动销·趋势下滑-中幅15%</option><option value="调价清仓-动销·趋势下滑-中幅15%·季末清">调价清仓-动销·趋势下滑-中幅15%·季末清</option><option value="调价清仓-动销·趋势下滑-中幅20%">调价清仓-动销·趋势下滑-中幅20%</option><option value="调价清仓-动销·趋势下滑-中幅20%·季末清">调价清仓-动销·趋势下滑-中幅20%·季末清</option><option value="调价清仓-动销·趋势放缓-调10%">调价清仓-动销·趋势放缓-调10%</option><option value="调价清仓-动销·趋势放缓-调10%·季末清">调价清仓-动销·趋势放缓-调10%·季末清</option><option value="调价清仓-动销·趋势放缓-调15%">调价清仓-动销·趋势放缓-调15%</option><option value="调价清仓-动销·趋势放缓-调15%·季末清">调价清仓-动销·趋势放缓-调15%·季末清</option><option value="调价清仓-动销·趋势稳定-微调10%">调价清仓-动销·趋势稳定-微调10%</option><option value="调价清仓-动销·趋势稳定-微调10%·季末清">调价清仓-动销·趋势稳定-微调10%·季末清</option><option value="调价清仓-动销·趋势稳定-微调5%">调价清仓-动销·趋势稳定-微调5%</option><option value="调价清仓-动销·趋势稳定-微调5%·季末清">调价清仓-动销·趋势稳定-微调5%·季末清</option><option value="调价清仓-动销·趋势稳定-微调5%·应季留">调价清仓-动销·趋势稳定-微调5%·应季留</option><option value="调价清仓-长期无销-直降4折">调价清仓-长期无销-直降4折</option></select>
     <label>专供款</label>
-    <select id="filterExclusive" onchange="filterTable()"><option value="">全部</option></select>
+    <select id="filterExclusive" onchange="filterTable()"><option value="">全部</option><option value="全网款">全网款</option><option value="产业联盟-流转">产业联盟-流转</option><option value="产业联盟-爆畅新">产业联盟-爆畅新</option><option value="唯品&抖音专供款">唯品&抖音专供款</option><option value="唯品&拼多多专供款">唯品&拼多多专供款</option><option value="唯品专供款">唯品专供款</option><option value="唯品专供款-供货代销">唯品专供款-供货代销</option><option value="唯品专供款-库存料开款">唯品专供款-库存料开款</option><option value="唯品专供款-秋壳转">唯品专供款-秋壳转</option><option value="唯品专供款-线下流转">唯品专供款-线下流转</option><option value="唯品会/抖音DP专供">唯品会/抖音DP专供</option><option value="唯品会/抖音DP专供-库存料开款">唯品会/抖音DP专供-库存料开款</option><option value="唯品会/抖音DP专供-线下流转">唯品会/抖音DP专供-线下流转</option><option value="商品部">商品部</option><option value="天猫/唯品">天猫/唯品</option><option value="天猫/抖音">天猫/抖音</option><option value="天猫渠道">天猫渠道</option><option value="小灯塔-唯品会专供">小灯塔-唯品会专供</option><option value="抖音专供款-流转">抖音专供款-流转</option><option value="抖音专供款-爆畅新">抖音专供款-爆畅新</option><option value="渠道/抖音DP专供">渠道/抖音DP专供</option><option value="线下款">线下款</option></select>
     <label>售罄率</label>
     <select id="filterStRate"><option value="">全部</option><option>0-20%</option><option>20-40%</option><option>40-60%</option><option>60-80%</option><option>80-100%</option><option>&gt;100%</option></select>
     <label>库存</label>
@@ -1809,7 +1824,7 @@ const LABEL_PREV_ST_DATA = {"畅销款": 73.0, "滞销款": 65.9, "爆款": 72.2
 const LABEL_PREV_COST_DATA = {"畅销款": 5997842.151084746, "滞销款": 5497111.077031854, "爆款": 3085837.9633573717, "平销款": 2887129.2204079763, "策略款": 1091380.2846183458, "线下款": 2020.32, "奥莱款": 0.0, "清仓款": 0.0, "#N/A": 0.0, "新品": 0.0};
 
 // 近7天日期范围（动态更新）
-var CUM_SALES_DATE_RANGE = '2026/07/27 ~ 2026/08/02';
+var CUM_SALES_DATE_RANGE = '2026/08/03 ~ 2026/08/09';
 if (CUM_SALES_DATE_RANGE && document.getElementById('detailDateRange')) {
   document.getElementById('detailDateRange').textContent =
     '横向滚动 · 点击表头排序 · 近7天: ' + CUM_SALES_DATE_RANGE;
@@ -1820,10 +1835,10 @@ const CAT_ST_DATA = {"连衣裙": 66.2, "衬衣": 72.1, "半身裙": 70.8, "针�
 // 店铺销售数据（含标签/专供款维度）
 var STORE_SALES_DATA = {};
 var DAILY_STORE_DATA = {"dates":[],"b0":{},"b1":{},"b2":{},"b3":{},"b4":{},"b5":{},"b6":{},"b7":{},"b8":{},"b9":{},"b10":{},"b11":{},"b12":{},"b13":{},"b14":{}};
-const STORE_LABEL_OPTIONS = ["平销款", "新品", "滞销款", "爆款", "畅销款", "策略款", "线下款"];
-const STORE_EXCLUSIVE_OPTIONS = ["产业联盟-流转", "产业联盟-爆畅新", "全网款", "唯品&拼多多专供款", "唯品专供款", "小灯塔-唯品会专供", "抖音专供款-流转", "抖音专供款-爆畅新", "线下款"];
-const STORE_SEASON_OPTIONS = ["夏", "春", "秋"];
-const STORE_STATUS_OPTIONS = ["#N/A", "26夏在生产", "26夏延续款", "26春在生产", "26秋延续款"];
+const STORE_LABEL_OPTIONS = ["奥莱款", "平销款", "平销款（线下代卖）", "拼团款", "新品", "清仓款", "滞销款", "爆款", "畅销款", "矩阵款", "策略款", "线下款"];
+const STORE_EXCLUSIVE_OPTIONS = ["产业联盟-流转", "产业联盟-爆畅新", "全网款", "唯品&拼多多专供款", "唯品专供款", "唯品专供款-库存料开款", "天猫/唯品", "天猫渠道", "小灯塔-唯品会专供", "抖音专供款-流转", "抖音专供款-爆畅新", "线下款"];
+const STORE_SEASON_OPTIONS = ["冬", "夏", "春", "秋"];
+const STORE_STATUS_OPTIONS = ["26冬在生产", "26冬延续款", "26夏在生产", "26夏延续款", "26春在生产", "26春延续款", "26秋在生产", "26秋延续款", "老款"];
 
 const COLORS = ['#87CECB','#5BA8A5','#B5E8E6','#3A8A87','#D4C5A9','#D4A05A','#6B9FBE','#E88B7A'];
 const ST_COLORS = ['#E88B7A','#D4A05A','#B5E8E6','#5BA8A5','#87CECB','#3A8A87'];
@@ -3910,9 +3925,9 @@ document.addEventListener('keydown', function(e) {
 // ====== 异步数据加载器（性能优化 v2） ======
 (function() {
   var dataFiles = [
-    { key: 'ITEMS', file: 'data/items.json', size: 1150911 },
-    { key: 'STORE_SALES_DATA', file: 'data/store_sales_data.json', size: 664768 },
-    { key: 'DAILY_STORE_DATA', file: 'data/daily_store_data.json', size: 2531631 }
+    { key: 'ITEMS', file: 'data/items.json', size: 1150915 },
+    { key: 'STORE_SALES_DATA', file: 'data/store_sales_data.json', size: 1165898 },
+    { key: 'DAILY_STORE_DATA', file: 'data/daily_store_data.json', size: 3994932 }
   ];
   var overlay = document.getElementById('dataLoadingOverlay');
   var loaded = 0, total = dataFiles.length;
@@ -3962,7 +3977,7 @@ document.addEventListener('keydown', function(e) {
   }
   
   function loadAll() {
-    var _v = '20260810_1786360131';  // 部署版本号，强制更新缓存
+    var _v = '20260810_1786361859';  // 部署版本号，强制更新缓存
     var promises = dataFiles.map(function(df) {
       return fetch(df.file + '?v=' + _v, { cache: 'reload' })
         .then(function(r) {

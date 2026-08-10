@@ -1715,8 +1715,8 @@ tr:nth-child(even):hover td {
   </div>  </div>
 </div>
 
-<!-- Section 5: 明细数据（默认折叠，按需展开） -->
-<div class="table-wrapper detail-collapsed" id="detailSection">
+<!-- Section 5: 明细数据（暂时隐藏） -->
+<div class="table-wrapper detail-collapsed" id="detailSection" style="display:none;">
   <div class="table-header">
     <h3>📋 全部 2566 款明细</h3>
     <span style="font-size:12px;color:var(--text-light);" id="detailDateRange">点击展开查看 · 横向滚动 · 点击表头排序</span>
@@ -3986,7 +3986,7 @@ document.addEventListener('keydown', function(e) {
     { key: 'DAILY_STORE_DATA', file: 'data/daily_store_data.json', size: 3994932, tier: 3 }
   ];
   var overlay = document.getElementById('dataLoadingOverlay');
-  var _v = '20260810_1786366822';
+  var _v = '20260810_1786368266';
   
   function hideOverlay() {
     if (overlay) {

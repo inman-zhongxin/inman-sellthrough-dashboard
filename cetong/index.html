@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>茵曼 2026秋冬新品测款仪表盘 v3</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Microsoft YaHei',sans-serif;background:#f0f2f5;color:#333}
+.header{background:linear-gradient(135deg,#1a3a5c,#2d6a9f);color:#fff;padding:16px 24px;position:sticky;top:0;z-index:100}
+.header h1{font-size:18px}
+.header .sub{font-size:11px;opacity:.8;margin-top:2px}
+.header .period{display:inline-block;background:#eab308;color:#1a3a5c;padding:2px 10px;border-radius:10px;font-weight:700;font-size:12px;margin-top:6px}
+
+.stats{display:flex;gap:10px;padding:16px 24px;flex-wrap:wrap}
+.card{background:#fff;border-radius:8px;padding:14px 18px;flex:1;min-width:110px;box-shadow:0 1px 3px rgba(0,0,0,.06);text-align:center}
+.card .num{font-size:26px;font-weight:700}
+.card .lbl{font-size:10px;color:#888;margin-top:2px}
+
+.filters{display:flex;gap:8px;padding:0 24px 12px;flex-wrap:wrap;align-items:center}
+.filters select,.filters input{padding:5px 8px;border:1px solid #d1d5db;border-radius:5px;font-size:11px;background:#fff}
+.filters label{font-size:11px;font-weight:600;color:#555;margin-right:-4px}
+.filters .count{font-size:11px;color:#888;margin-left:auto}
+
+.tbl-wrap{overflow:auto;padding:0 24px 16px;max-height:calc(100vh - 280px)}
+table{width:100%;border-collapse:collapse;background:#fff;font-size:11px}
+th{background:#1f4e79;color:#fff;padding:6px 4px;position:sticky;top:0;z-index:10;white-space:nowrap;cursor:pointer;user-select:none}
+th:hover{background:#2d6a9f}
+td{padding:4px;border-bottom:1px solid #f0f0f0;white-space:nowrap;text-align:center}
+tr:hover{background:#f8fafd}
+
+.img-cell{cursor:pointer;padding:2px}
+.img-cell img{width:40px;height:40px;object-fit:cover;border-radius:4px;transition:transform .15s}
+.img-cell img:hover{transform:scale(1.1)}
+
+.badge{display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:600}
+.green{background:#dcfce7;color:#16a34a}
+.yellow{background:#fef9c3;color:#ca8a04}
+.red{background:#fee2e2;color:#dc2626}
+
+.score-bar{display:inline-block;height:14px;border-radius:3px;vertical-align:middle;margin-right:3px}
+
+.wow-up{color:#16a34a}
+.wow-down{color:#dc2626}
+.wow-flat{color:#888}
+
+.metric-prev{font-size:10px;color:#aaa;display:block;line-height:1.3}
+
+/* 列筛选器 */
+.col-toggle-bar{margin:0 24px 10px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.col-chip{display:inline-block;padding:2px 8px;border:1px solid #d1d5db;border-radius:12px;font-size:11px;cursor:pointer;user-select:none;background:#f9fafb;color:#777;transition:all .15s}
+.col-chip.on{background:#1f4e79;color:#fff;border-color:#1f4e79}
+.col-chip.paid-tag{border-color:#c4b5fd}
+.col-chip:hover{border-color:#1f4e79}
+
+/* 分页栏 */
+.pager-bar{margin:0 24px 10px;display:flex;align-items:center;gap:8px;font-size:11px;color:#555;flex-wrap:wrap}
+.pager-bar button{padding:4px 12px;border:1px solid #d1d5db;border-radius:5px;background:#fff;cursor:pointer;font-size:11px}
+.pager-bar button:hover:not(:disabled){background:#1f4e79;color:#fff;border-color:#1f4e79}
+.pager-bar button:disabled{opacity:.4;cursor:not-allowed}
+.pager-bar input{width:52px;padding:4px 6px;border:1px solid #d1d5db;border-radius:5px;font-size:11px}
+
+/* 付费指标列底色 */
+.col-paid{background-color:#fef9c3}  /* 淡黄底色 */
+th.col-paid{color:#000}  /* 付费表头黑色字体 */
+
+/* 评分说明面板 */
+.info-panel{margin:0 24px 12px;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden}
+.info-header{background:#f9fafb;padding:8px 14px;cursor:pointer;font-size:12px;font-weight:600;display:flex;justify-content:space-between;user-select:none}
+.info-header:hover{background:#f3f4f6}
+.info-body{padding:10px 14px;font-size:11px;line-height:1.7;color:#555;background:#fff;border-top:1px solid #e5e7eb}
+.info-body b{color:#333}
+.info-body .decision-box{display:inline-block;padding:1px 6px;border-radius:3px;margin-left:4px;font-size:10px}
+.dec-green{background:#dcfce7;color:#166534}
+.dec-yellow{background:#fef9c3;color:#854d0e}
+.dec-red{background:#fee2e2;color:#991b1b}
+
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.75);z-index:9999;justify-content:center;align-items:center}
+.modal.show{display:flex}
+.modal img{max-width:90vw;max-height:90vh;border-radius:8px;box-shadow:0 4px 30px rgba(0,0,0,.3)}
+.modal .close{position:absolute;top:20px;right:30px;color:#fff;font-size:32px;cursor:pointer}
+
+.footer{text-align:center;padding:16px;font-size:10px;color:#aaa}
+.note{background:#fef9c3;border-left:4px solid #eab308;padding:8px 14px;border-radius:4px;font-size:11px;margin:0 24px 12px}
+</style>
+</head>
+<body>
+
+<div class="header">
+<h1>茵曼 · 2026秋冬新品测款仪表盘 v3</h1>
+<div class="sub">四维加权(加购率+转化率+UV价值+UV) | 仅「26秋在生产」 | 品类内百分位排名 | 双击图片放大</div>
+<div class="period" id="periodLabel">📅 近7天: 加载中...</div>
+</div>
+
+<div class="stats">
+<div class="card"><div class="num" style="color:#3b82f6" id="statTotal">-</div><div class="lbl">26秋新品</div></div>
+<div class="card"><div class="num" style="color:#22c55e" id="statGreen">-</div><div class="lbl">🟢 绿灯</div></div>
+<div class="card"><div class="num" style="color:#eab308" id="statYellow">-</div><div class="lbl">🟡 黄灯</div></div>
+<div class="card"><div class="num" style="color:#ef4444" id="statRed">-</div><div class="lbl">🔴 红灯</div></div>
+</div>
+
+<!-- 评分模型说明 -->
+<div class="info-panel">
+<div class="info-header" onclick="document.getElementById('infoBody').style.display=document.getElementById('infoBody').style.display==='none'?'block':'none';document.getElementById('infoToggle').textContent=document.getElementById('infoBody').style.display==='none'?'展开 ▶':'收起 ▲'">
+<span>📊 评分模型 & 决策说明</span>
+<span id="infoToggle">展开 ▶</span>
+</div>
+<div class="info-body" id="infoBody" style="display:none">
+<p><b>四维加权评分：</b>在同一品类内，每个维度做<b>百分位排名</b>（0-100分），乘以品类差异化权重后求和 = 综合分。</p>
+<p><b>权重分层：</b>按客单价分为三档，权重侧重不同维度：</p>
+<table style="width:100%;border-collapse:collapse;font-size:11px;margin:6px 0;text-align:center">
+<tr style="background:#f9fafb;font-weight:600">
+<td style="border:1px solid #e5e7eb;padding:4px 6px">客单档</td>
+<td style="border:1px solid #e5e7eb;padding:4px 6px">覆盖品类</td>
+<td style="border:1px solid #e5e7eb;padding:4px 6px">加购率</td>
+<td style="border:1px solid #e5e7eb;padding:4px 6px">转化率</td>
+<td style="border:1px solid #e5e7eb;padding:4px 6px">UV价值</td>
+<td style="border:1px solid #e5e7eb;padding:4px 6px">UV</td>
+</tr>
+<tr>
+<td style="border:1px solid #e5e7eb;padding:4px 6px">🔴 高客单</td>
+<td style="border:1px solid #e5e7eb;padding:4px 6px;text-align:left">羽绒服 · 毛呢大衣 · 羊毛衫 · 羊绒衫 · 棉服</td>
+<td style="border:1px solid #e5e7eb;padding:4px 6px"><b>20%</b></td>
+<td style="border:1px solid #e5e7eb;padding:4px 6px">25%</td>
+<td style="border:1px solid #e5e7eb;padding:4px 6px"><b>35%</b></td>
+<td style="border:1px solid #e5e7eb;padding:4px 6px">20%</td>
+</tr>
+<tr>
+<td style="border:1px solid #e5e7eb;padding:4px 6px">🟡 中客单</td>
+<td style="border:1px solid #e5e7eb;padding:4px 6px;text-align:left">外套 · 休闲裤 · 牛仔裤 · 连衣裙 · 半身裙 · 毛衣/针织</td>
+<td style="border:1px solid #e5e7eb;padding:4px 6px">30%</td>
+<td style="border:1px solid #e5e7eb;padding:4px 6px">20%</td>
+<td style="border:1px solid #e5e7eb;padding:4px 6px">25%</td>
+<td style="border:1px solid #e5e7eb;padding:4px 6px">25%</td>
+</tr>
+<tr>
+<td style="border:1px solid #e5e7eb;padding:4px 6px">🟢 低客单</td>
+<td style="border:1px solid #e5e7eb;padding:4px 6px;text-align:left">T恤 · 衬衫 · 卫衣</td>
+<td style="border:1px solid #e5e7eb;padding:4px 6px"><b>35%</b></td>
+<td style="border:1px solid #e5e7eb;padding:4px 6px">25%</td>
+<td style="border:1px solid #e5e7eb;padding:4px 6px">15%</td>
+<td style="border:1px solid #e5e7eb;padding:4px 6px">25%</td>
+</tr>
+</table>
+<p style="margin-top:6px"><b>三灯决策：</b>
+  <span class="decision-box dec-green">🟢 绿灯</span> = 综合分 ≥ 品类绿灯线 <b>且</b> UV ≥ 最低客流门槛 <b>且</b> 加购 ≥ 最低门槛 → <b>建议加流量</b><br>
+  <span class="decision-box dec-yellow">🟡 黄灯</span> = 综合分 ≥ 红灯线但未达绿灯条件 → <b>继续观察，暂不操作</b><br>
+  <span class="decision-box dec-red">🔴 红灯</span> = 综合分 &lt; 红灯线 → <b>暂停观望 / 优化主图详情页</b></p>
+<p><b>上期数值：</b>每个指标下方灰色小字为上一时段绝对值，百分比环比为(本期-上期)/上期 × 100%。默认显示最近一周 vs 前一周；自定义日期范围则对比等长前序时段。</p>
+</div>
+</div>
+
+<div class="filters">
+<label>日期范围:</label>
+<input type="date" id="dateFrom" style="width:130px">
+<span style="font-size:11px">至</span>
+<input type="date" id="dateTo" style="width:130px">
+<button onclick="applyDateRange()" style="padding:5px 12px;background:#1f4e79;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:11px">应用</button>
+
+<label>类目:</label>
+<select id="filterCat" onchange="render()"><option value="">全部</option>
+<option value=""></option><option value="(仿)毛衣">(仿)毛衣</option><option value="T恤">T恤</option><option value="其他">其他</option><option value="内衣类">内衣类</option><option value="半身裙">半身裙</option><option value="卫衣">卫衣</option><option value="双面呢外套">双面呢外套</option><option value="双面呢外套类">双面呢外套类</option><option value="吊带 背心">吊带 背心</option><option value="围巾类">围巾类</option><option value="外套 上衣">外套 上衣</option><option value="套装">套装</option><option value="棉衣">棉衣</option><option value="毛呢外套">毛呢外套</option><option value="毛织半身裙类">毛织半身裙类</option><option value="毛织连衣裙">毛织连衣裙</option><option value="牛仔裤">牛仔裤</option><option value="羊毛衫">羊毛衫</option><option value="羊羔绒外套">羊羔绒外套</option><option value="羽绒服">羽绒服</option><option value="衬衣">衬衣</option><option value="裤子">裤子</option><option value="连衣裙">连衣裙</option><option value="针织衫">针织衫</option><option value="风衣">风衣</option><option value="马夹">马夹</option>
+</select>
+
+<label>标签:</label>
+<select id="filterLabel" onchange="render()"><option value="">全部</option>
+<option value="付费投放">付费投放</option><option value="平销款">平销款</option><option value="新品">新品</option><option value="滞销款">滞销款</option><option value="爆款">爆款</option><option value="畅销款">畅销款</option><option value="策略款">策略款</option><option value="线下款">线下款</option>
+</select>
+
+<label>决策:</label>
+<select id="filterDecision" onchange="render()">
+<option value="">全部</option><option value="绿灯">🟢 绿灯</option><option value="黄灯">🟡 黄灯</option><option value="红灯">🔴 红灯</option>
+</select>
+
+<label>季节:</label>
+<select id="filterSeason" onchange="render()">
+<option value="">全部</option><option value="春季">春季</option><option value="夏季">夏季</option><option value="秋季">秋季</option><option value="冬季">冬季</option><option value="全季">全季</option>
+</select>
+
+<label>状态:</label>
+<select id="filterStatus" onchange="render()">
+<option value="">全部</option>
+<option value="26全季在生产">26全季在生产</option><option value="26冬在生产">26冬在生产</option><option value="26冬延续款">26冬延续款</option><option value="26夏在生产">26夏在生产</option><option value="26夏延续款">26夏延续款</option><option value="26春在生产">26春在生产</option><option value="26春延续款">26春延续款</option><option value="26秋在生产">26秋在生产</option><option value="26秋延续款">26秋延续款</option><option value="付费投放">付费投放</option><option value="老款">老款</option>
+</select>
+
+<label>专供款:</label>
+<select id="filterExclusive" onchange="render()">
+<option value="">全部</option><option value="全网款">全网款</option><option value="唯品专供款">唯品专供款</option><option value="抖音专供款">抖音专供款</option>
+</select>
+
+<label>最低分:</label>
+<input type="number" id="filterMinScore" placeholder="0" min="0" max="100" style="width:55px" onchange="render()">
+
+<label>搜索:</label>
+<input type="text" id="filterSearch" placeholder="款号..." style="width:100px" oninput="onSearchInput()">
+
+<button onclick="exportExcel()" style="padding:5px 12px;background:#1f4e79;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:11px;margin-left:8px">📥 导出Excel</button>
+<button onclick="exportNotes()" style="padding:5px 12px;background:#d97706;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:11px;margin-left:4px" title="下载备注为notes.json，替换工作区文件后次日部署全员同步">📝 导出备注</button>
+<span id="noteSyncStatus" style="font-size:10px;color:#d97706;margin-left:6px;display:none"></span>
+
+<span class="count" id="resultCount"></span>
+</div>
+
+<div class="note" id="seasonNote"></div>
+
+<!-- 列筛选器 -->
+<div class="col-toggle-bar" id="colToggleBar">
+<span style="font-size:11px;font-weight:600;color:#555">显示列：</span>
+</div>
+
+<!-- 分页栏 -->
+<div class="pager-bar" id="pagerBar" style="display:none"></div>
+
+<div class="tbl-wrap">
+<table id="mainTable">
+<thead><tr id="tableHead"></tr></thead>
+<tbody id="tableBody"><tr><td colspan="14" style="padding:30px;color:#888">正在加载数据...</td></tr></tbody>
+</table>
+</div>
+
+<!-- 大图模态框 -->
+<div class="modal" id="imgModal" onclick="closeModal()">
+<span class="close">&times;</span>
+<img id="modalImg" src="">
+</div>
+
+<div class="footer">茵曼 2026秋冬测款 v3 | 数据来源: 京东商智日粒度 | 点击表头排序 | 双击图片放大</div>
+
+<script src="data.js"></script>
+<script>
+// ═══════ 全局配置 ═══════
+let sortColIdx = 7, sortDir = -1; // 默认UV降序（在可见列中的位置）
+let currentWeek = ALL_WEEKS[ALL_WEEKS.length-1];
+let currentData = [];
+
+// 列定义：{id, label, type, prev?, fmt?, width?}
+const COLS = [
+    {id:'img', label:'图', type:'img', width:'48px', vis:true, core:true},
+    {id:'item', label:'款号', type:'text', vis:true, core:true},
+    {id:'tag_cat', label:'品类', type:'text', vis:true, core:true},
+    {id:'final_label', label:'标签', type:'text', vis:false},
+    {id:'score', label:'综合分', type:'score', vis:true, core:true},
+    {id:'decision', label:'决策', type:'badge', vis:true},
+    {id:'uv', label:'UV', type:'metric', prev:'prev_uv', fmt:'uv', vis:true, core:true},
+    {id:'uv_wow', label:'UV环比', type:'wow', vis:false},
+    {id:'avg_daily_uv', label:'日均访客', type:'metric', prev:'prev_avg_uv', fmt:'uv', vis:true},
+    {id:'avg_uv_wow', label:'日均环比', type:'wow', vis:true},
+    {id:'gmv', label:'GMV', type:'metric', prev:'prev_gmv', fmt:'money', vis:true, core:true},
+    {id:'gmv_wow', label:'GMV环比', type:'wow', vis:true},
+    {id:'cart_rate', label:'加购率', type:'metric', prev:'prev_cart_rate', fmt:'pct', vis:true},
+    {id:'cart_wow', label:'加购环比', type:'wow', vis:false},
+    {id:'cvr', label:'转化率', type:'metric', prev:'prev_cvr', fmt:'pct', vis:true},
+    {id:'uv_val', label:'UV价值', type:'metric', prev:'prev_uv_val', fmt:'money', vis:true},
+    // 付费数据
+    {id:'ad_spend', label:'花费', type:'metric', prev:'prev_ad_spend', fmt:'money', vis:true, paid:true, core:true},
+    {id:'ad_spend_wow', label:'花费环比', type:'wow', vis:true, paid:true},
+    {id:'ad_impressions', label:'展现', type:'metric', prev:'prev_ad_impressions', fmt:'uv', vis:false, paid:true},
+    {id:'ad_clicks', label:'点击', type:'metric', prev:'prev_ad_clicks', fmt:'uv', vis:true, paid:true},
+    {id:'avg_daily_spend', label:'日均花费', type:'metric', prev:'prev_avg_daily_spend', fmt:'money', vis:true, paid:true, core:true},
+    {id:'avg_daily_clicks', label:'日均点击', type:'metric', prev:'prev_avg_daily_clicks', fmt:'uv', vis:true, paid:true},
+    {id:'ad_gmv', label:'广告GMV', type:'metric', prev:'prev_ad_gmv', fmt:'money', vis:true, paid:true},
+    {id:'ad_gmv_wow', label:'广告GMV环比', type:'wow', vis:false, paid:true},
+    {id:'ad_roi', label:'投产比', type:'metric', prev:'prev_ad_roi', fmt:'float1', vis:true, paid:true},
+    {id:'sale_season', label:'季节', type:'text', vis:false, width:'70px'},
+    {id:'sale_status', label:'销售状态', type:'text', vis:false, width:'90px'},
+    {id:'exclusive_model', label:'专供款', type:'text', vis:false, width:'100px'},
+    // 备注
+    {id:'notes', label:'备注', type:'notes', vis:true, width:'120px'},
+];
+function getVisCols() { return COLS.filter(c => c.vis); }
+function visibleIdx(colId) { let v=COLS.filter(c=>c.vis); for(let i=0;i<v.length;i++) if(v[i].id===colId) return i; return -1; }
+
+// 生成列筛选器
+function buildColToggles() {
+    let bar = document.getElementById('colToggleBar');
+    COLS.forEach((c,i) => {
+        if (c.core) return; // 核心列不可隐藏
+        let chip = document.createElement('span');
+        chip.className = 'col-chip' + (c.vis ? ' on' : '') + (c.paid ? ' paid-tag' : '');
+        chip.textContent = c.label;
+        chip.onclick = function() {
+            c.vis = !c.vis;
+            chip.className = 'col-chip' + (c.vis ? ' on' : '') + (c.paid ? ' paid-tag' : '');
+            buildHeader();
+            render();
+        };
+        bar.appendChild(chip);
+    });
+}
+
+// 动态表头
+function buildHeader() {
+    let thead = document.getElementById('tableHead');
+    let html = '';
+    let idx = 0;
+    COLS.forEach(c => {
+        if (!c.vis) return;
+        let w = c.width || '';
+        let cls = c.paid ? ' class="col-paid"' : '';
+        html += '<th'+cls+' style="'+(w?'width:'+w+';':'')+'" onclick="toggleSort('+idx+')">'+c.label+'</th>';
+        idx++;
+    });
+    thead.innerHTML = html;
+}
+
+// ═══════ 初始化 ═══════
+function init() {
+    try {
+        document.getElementById('dateFrom').value = currentWeek;
+        let parts = currentWeek.split('-');
+        let endD = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2])+6);
+        let y = endD.getFullYear(), m = String(endD.getMonth()+1).padStart(2,'0'), d = String(endD.getDate()).padStart(2,'0');
+        document.getElementById('dateTo').value = y+'-'+m+'-'+d;
+        buildColToggles();
+        buildHeader();
+        applyDateRange();
+    } catch(e) {
+        document.getElementById('tableBody').innerHTML = '<tr><td style="color:red;padding:20px">初始化错误: '+e.message+'</td></tr>';
+        console.error(e);
+    }
+}
+
+function applyDateRange() {
+    let from = document.getElementById('dateFrom').value;
+    let to = document.getElementById('dateTo').value;
+    if (!from || !to) return;
+    
+    document.getElementById('periodLabel').innerHTML = '&#128197; 自定义: '+from+' ~ '+to;
+    
+    // === 日粒度精确聚合：对每个SPU累加[from, to]范围内的日数据 ===
+    let aggBySpu = {};
+    let rangeDays = 0;
+    // 计算实际天数
+    let fd = new Date(from + 'T00:00:00');
+    let td = new Date(to + 'T00:00:00');
+    rangeDays = Math.round((td - fd) / 86400000) + 1;
+    
+    for (let spu in __DD) {
+        let m = __M[spu];
+        if (!m) continue;
+        let a = aggregateDaily(spu, from, to);
+        if (!a) continue;
+        
+        aggBySpu[spu] = {
+            spu, item: m[0], tag_cat: m[1], v5_cat: m[2], final_label: m[3],
+            img: m[4]||'', w_add_cart: m[5], w_cvr: m[6], w_uv_val: m[7], w_uv: m[8],
+            th_green: m[9], th_red: m[10], th_uv_min: m[11], th_cart_min: m[12],
+            notes: m[13]||'', sale_season: m[14]||'', sale_status: m[15]||'', exclusive_model: m[16]||'',
+            week_start: from, week_end: to, days_in_week: a.dc || rangeDays,
+            uv: a.u, pv: 0, gmv: a.g, sales: a.sl, cart_users: a.ca, buyers: a.by,
+            ad_spend: Math.round(a.as * 100) / 100,
+            ad_impressions: a.ai, ad_clicks: a.ac,
+            ad_gmv: Math.round(a.ag * 100) / 100,
+            ad_orders: 0, ad_cart: 0, score: 0, rank: 0, decision: '',
+        };
+        
+        let r = aggBySpu[spu];
+        let uv = r.uv || 1;
+        r.cart_rate = r.cart_users / uv;
+        r.cvr = r.buyers / uv;
+        r.uv_val = Math.round(r.gmv / uv * 10) / 10;
+        r.avg_daily_uv = Math.round(r.uv / rangeDays);
+        r.avg_daily_spend = Math.round(r.ad_spend / rangeDays);
+        r.avg_daily_clicks = Math.round(r.ad_clicks / rangeDays);
+        r.ad_roi = r.ad_spend > 0 ? Math.round(r.ad_gmv / r.ad_spend * 10) / 10 : 0;
+    }
+    
+    currentData = Object.values(aggBySpu);
+    
+    // === 环比：对比等长前序时段（同样用日粒度精确聚合） ===
+    let prevFrom = new Date(fd.getTime() - (rangeDays) * 86400000);
+    let prevTo = new Date(fd.getTime() - 86400000);
+    let prevFromS = fmtLocalDate(prevFrom);
+    let prevToS   = fmtLocalDate(prevTo);
+    
+    for (let r of currentData) {
+        let pa = aggregateDaily(r.spu, prevFromS, prevToS);
+        if (!pa) continue;
+        let puv = pa.u || 1;
+        let p_ad_spend = Math.round(pa.as * 100) / 100;
+        r.prev_uv = pa.u;
+        r.prev_avg_uv = Math.round(pa.u / rangeDays);
+        r.avg_uv_wow = r.prev_avg_uv > 0 ? (r.avg_daily_uv - r.prev_avg_uv) / r.prev_avg_uv : null;
+        r.prev_gmv = pa.g;
+        r.prev_sales = pa.sl;
+        r.prev_cart_users = pa.ca;
+        r.prev_cart_rate = puv > 0 ? Math.round(pa.ca / puv * 10000) / 10000 : null;
+        r.prev_cvr = puv > 0 ? Math.round(pa.by / puv * 10000) / 10000 : null;
+        r.prev_uv_val = puv > 0 ? Math.round(pa.g / puv * 10) / 10 : null;
+        r.prev_ad_spend = p_ad_spend;
+        r.prev_ad_gmv = Math.round(pa.ag * 100) / 100;
+        r.prev_ad_clicks = pa.ac;
+        r.prev_avg_daily_spend = Math.round(pa.as / rangeDays);
+        r.prev_avg_daily_clicks = Math.round(pa.ac / rangeDays);
+        r.prev_ad_roi = pa.as > 0 ? Math.round(pa.ag / pa.as * 10) / 10 : null;
+        r.ad_spend_wow = pa.as > 0 ? (r.ad_spend - pa.as) / pa.as : null;
+        r.ad_gmv_wow = pa.ag > 0 ? (r.ad_gmv - pa.ag) / pa.ag : null;
+        r.ad_clicks_wow = pa.ac > 0 ? (r.ad_clicks - pa.ac) / pa.ac : null;
+        r.avg_daily_spend_wow = r.prev_avg_daily_spend > 0 ? (r.avg_daily_spend - r.prev_avg_daily_spend) / r.prev_avg_daily_spend : null;
+        r.avg_daily_clicks_wow = r.prev_avg_daily_clicks > 0 ? (r.avg_daily_clicks - r.prev_avg_daily_clicks) / r.prev_avg_daily_clicks : null;
+        // 自然指标环比
+        r.uv_wow = pa.u > 0 ? (r.uv - pa.u) / pa.u : null;
+        r.gmv_wow = pa.g > 0 ? (r.gmv - pa.g) / pa.g : null;
+        r.sales_wow = pa.sl > 0 ? (r.sales - pa.sl) / pa.sl : null;
+        r.cart_wow = pa.ca > 0 ? (r.cart_users - pa.ca) / pa.ca : null;
+    }
+    
+    rescore();
+    render();
+}
+
+function rescore() {
+    // 按v5_cat分组，做品类内百分位
+    let byCat = {};
+    for (let r of currentData) {
+        let c = r.v5_cat || '其他';
+        if (!byCat[c]) byCat[c] = [];
+        byCat[c].push(r);
+    }
+    
+    for (let [cat, rows] of Object.entries(byCat)) {
+        if (rows.length < 2) continue;
+        
+        // 百分位
+        ['cart_rate','cvr','uv_val','uv'].forEach(m => {
+            let vals = rows.map(r => r[m] || 0).sort((a,b)=>a-b);
+            rows.forEach(r => {
+                let v = r[m] || 0;
+                let rank = vals.filter(x => x <= v).length;
+                r[m+'_pct'] = rank / vals.length * 100;
+            });
+        });
+        
+        // 加权 + 决策
+        rows.forEach(r => {
+            r.score = (r.cart_rate_pct||0)*r.w_add_cart + (r.cvr_pct||0)*r.w_cvr + (r.uv_val_pct||0)*r.w_uv_val + (r.uv_pct||0)*r.w_uv;
+            r.score = Math.round(r.score*10)/10;
+            
+            let uv = r.uv||0, cart = r.cart_users||0;
+            if (r.score >= r.th_green && uv >= r.th_uv_min && cart >= r.th_cart_min) r.decision = '🟢 绿灯';
+            else if (r.score >= r.th_red) r.decision = '🟡 黄灯';
+            else r.decision = '🔴 红灯';
+        });
+        
+        // 排名
+        rows.sort((a,b)=>b.score-a.score);
+        rows.forEach((r,i)=>r.rank=i+1);
+    }
+    // 单款品类：无法做百分位，但仍需给决策
+    for (let r of currentData) {
+        if (!r.decision) {
+            let uv = r.uv||0, cart = r.cart_users||0;
+            r.score = r.score || 0;
+            if (r.score >= r.th_green && uv >= r.th_uv_min && cart >= r.th_cart_min) r.decision = '🟢 绿灯';
+            else if (r.score >= r.th_red) r.decision = '🟡 黄灯';
+            else r.decision = '🔴 红灯';
+            r.rank = r.rank || 999;
+        }
+    }
+}
+
+function getBadge(d) {
+    if (!d) return '<span class="badge red">-</span>';
+    if (d.includes('绿灯')) return '<span class="badge green">'+d+'</span>';
+    if (d.includes('黄灯')) return '<span class="badge yellow">'+d+'</span>';
+    return '<span class="badge red">'+d+'</span>';
+}
+
+function getScoreBar(s) {
+    let w = Math.min(100, Math.max(0, s));
+    let c = s>=80?'#22c55e':s>=50?'#eab308':s>=35?'#f97316':'#ef4444';
+    return '<span class="score-bar" style="width:'+w+'px;background:'+c+'"></span>';
+}
+
+function getWow(v) {
+    if (v===null || v===undefined || isNaN(v) || !isFinite(v)) return '<span class="wow-flat">-</span>';
+    let pct = (v*100).toFixed(1);
+    if (v > 0) return '<span class="wow-up">+'+pct+'%</span>';
+    if (v < 0) return '<span class="wow-down">'+pct+'%</span>';
+    return '<span class="wow-flat">0%</span>';
+}
+
+function openImg(url) {
+    if (!url) return;
+    document.getElementById('modalImg').src = url;
+    document.getElementById('imgModal').classList.add('show');
+}
+
+function closeModal() {
+    document.getElementById('imgModal').classList.remove('show');
+}
+
+function getFilteredData() {
+    let cat = document.getElementById('filterCat').value;
+    let label = document.getElementById('filterLabel').value;
+    let dec = document.getElementById('filterDecision').value;
+    let season = document.getElementById('filterSeason').value;
+    let status = document.getElementById('filterStatus').value;
+    let exclusive = document.getElementById('filterExclusive').value;
+    let minScore = parseInt(document.getElementById('filterMinScore').value) || 0;
+    let search = document.getElementById('filterSearch').value.toLowerCase();
+    
+    let filtered = currentData;
+    if (cat) filtered = filtered.filter(r => r.tag_cat === cat);
+    if (label) filtered = filtered.filter(r => r.final_label === label);
+    if (dec) filtered = filtered.filter(r => r.decision && r.decision.includes(dec));
+    if (season) filtered = filtered.filter(r => r.sale_season && r.sale_season === season);
+    if (status) filtered = filtered.filter(r => r.sale_status && r.sale_status === status);
+    if (exclusive) filtered = filtered.filter(r => r.exclusive_model && r.exclusive_model === exclusive);
+    if (minScore > 0) filtered = filtered.filter(r => r.score >= minScore);
+    if (search) filtered = filtered.filter(r => r.item.toLowerCase().includes(search));
+    return filtered;
+}
+
+// ═══════ 分页渲染 ═══════
+const PAGE_SIZE = 100;      // 每页行数
+let curPage = 1;            // 当前页
+let _filterSig = '';        // 筛选状态签名，变化时重置页码
+
+// 搜索防抖：停止输入 300ms 后才重新渲染
+let _searchTimer = null;
+function onSearchInput() {
+    clearTimeout(_searchTimer);
+    _searchTimer = setTimeout(() => render(), 300);
+}
+
+function getFilterSig() {
+    return ['filterCat','filterLabel','filterDecision','filterSeason','filterStatus','filterExclusive','filterMinScore','filterSearch']
+        .map(id => document.getElementById(id).value).join('|');
+}
+
+function goPage(n) {
+    curPage = n;
+    render();
+    // 回到表格顶部
+    let wrap = document.querySelector('.tbl-wrap');
+    if (wrap) wrap.scrollTop = 0;
+}
+
+function updatePager(totalPages, totalRows) {
+    let bar = document.getElementById('pagerBar');
+    if (totalPages <= 1 && totalRows <= PAGE_SIZE) { bar.style.display = 'none'; return; }
+    bar.style.display = 'flex';
+    let html = '<button onclick="goPage(1)" ' + (curPage<=1?'disabled':'') + '>首页</button>'
+        + '<button onclick="goPage(' + (curPage-1) + ')" ' + (curPage<=1?'disabled':'') + '>上一页</button>'
+        + '<span>第 ' + curPage + ' / ' + totalPages + ' 页 · 共 ' + totalRows + ' 款</span>'
+        + '<button onclick="goPage(' + (curPage+1) + ')" ' + (curPage>=totalPages?'disabled':'') + '>下一页</button>'
+        + '<button onclick="goPage(' + totalPages + ')" ' + (curPage>=totalPages?'disabled':'') + '>末页</button>'
+        + '&nbsp;跳至&nbsp;<input type="number" id="pageJump" min="1" max="' + totalPages + '" style="width:52px" onchange="goPage(Math.min(Math.max(parseInt(this.value)||1,1),' + totalPages + '))">&nbsp;页';
+    bar.innerHTML = html;
+}
+
+function render() {
+    try {
+    // 筛选条件变化时重置到第1页（排序变化不重置）
+    let sig = getFilterSig();
+    if (sig !== _filterSig) { _filterSig = sig; curPage = 1; }
+    
+    let filtered = getFilteredData();
+    let totalRows = filtered.length;
+    let totalPages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
+    if (curPage > totalPages) curPage = totalPages;
+    
+    // 排序（基于可见列）
+    let visCols = getVisCols();
+    if (sortColIdx >= 0 && sortColIdx < visCols.length) {
+        let colDef = visCols[sortColIdx];
+        let sk = colDef.id;
+        filtered.sort((a,b) => {
+            let va = a[sk], vb = b[sk];
+            if (va === null || va === undefined) va = (colDef.type === 'wow') ? -999 : '';
+            if (vb === null || vb === undefined) vb = (colDef.type === 'wow') ? -999 : '';
+            if (typeof va === 'string') return sortDir * va.localeCompare(String(vb));
+            return sortDir * (va - vb);
+        });
+    }
+    
+    // 统计
+    let g = filtered.filter(r => r.decision && r.decision.includes('绿灯')).length;
+    let y = filtered.filter(r => r.decision && r.decision.includes('黄灯')).length;
+    let r2 = filtered.filter(r => r.decision && r.decision.includes('红灯')).length;
+    document.getElementById('statTotal').textContent = totalRows;
+    document.getElementById('statGreen').textContent = g;
+    document.getElementById('statYellow').textContent = y;
+    document.getElementById('statRed').textContent = r2;
+    document.getElementById('resultCount').textContent = '显示 '+totalRows+' 款';
+    
+    // 季节提示
+    let hasDeep = filtered.some(r => r.sale_season === '冬季');
+    document.getElementById('seasonNote').innerHTML = hasDeep ? 
+        '⚠ 当前包含深秋品类(毛衣/羽绒服/大衣等)，该品类尚未到爆发期，评分偏低属正常，请结合季节节奏判断。' : '';
+    
+    // 列驱动渲染 — 仅当前页（分页，避免一次性插入数千行DOM）
+    let pageRows = filtered.slice((curPage-1) * PAGE_SIZE, curPage * PAGE_SIZE);
+    let html = '';
+    for (let r of pageRows) {
+        html += '<tr>';
+        for (let c of visCols) {
+            html += renderCell(r, c);
+        }
+        html += '</tr>';
+    }
+    document.getElementById('tableBody').innerHTML = html;
+    updatePager(totalPages, totalRows);
+    } catch(e) {
+        document.getElementById('tableBody').innerHTML = '<tr><td style="color:red;padding:20px">渲染错误: '+e.message+'</td></tr>';
+        console.error(e);
+    }
+}
+
+function renderCell(r, col) {
+    let paidClass = col.paid ? ' class="col-paid"' : '';
+    switch(col.type) {
+        case 'img': 
+            return r.img ? `<td class="img-cell" ondblclick="openImg('${r.img}')"><img src="${r.img}" loading="lazy" decoding="async" onerror="this.style.display='none'"></td>` : '<td></td>';
+        case 'text':
+            return '<td'+paidClass+'><b>'+r[col.id]+'</b></td>';
+        case 'score':
+            return '<td'+paidClass+'>'+getScoreBar(r.score)+'<b>'+r.score+'</b></td>';
+        case 'badge':
+            return '<td'+paidClass+'>'+getBadge(r.decision)+'</td>';
+        case 'metric':
+            return '<td'+paidClass+'>'+formatMetric(r, col)+'</td>';
+        case 'wow':
+            return '<td'+paidClass+'>'+getWow(r[col.id])+'</td>';
+        case 'notes':
+            return '<td'+paidClass+' style="padding:2px 4px"><input class="note-input" value="'+(r.notes||'')+'" data-spu="'+r.spu+'" onchange="saveNote(this)" placeholder="..." style="width:100%;border:1px solid #e5e7eb;border-radius:3px;padding:3px 5px;font-size:11px;background:transparent"></td>';
+        default:
+            return '<td'+paidClass+'>'+r[col.id]+'</td>';
+    }
+}
+
+function formatMetric(r, col) {
+    let v = r[col.id];
+    if (v === null || v === undefined) return '-';
+    let display;
+    switch(col.fmt) {
+        case 'uv': display = v.toLocaleString(); break;
+        case 'money': display = '¥'+ (Number.isInteger(v) ? v.toLocaleString() : v.toFixed(2)); break;
+        case 'pct': display = (v*100).toFixed(1)+'%'; break;
+        case 'float1': display = (typeof v === 'number' ? v.toFixed(1) : v); break;
+        default: display = v;
+    }
+    let prev = r[col.prev];
+    if (prev !== null && prev !== undefined) {
+        let prevDisplay;
+        switch(col.fmt) {
+            case 'uv': prevDisplay = prev.toLocaleString(); break;
+            case 'money': prevDisplay = '¥'+ (Number.isInteger(prev) ? prev.toLocaleString() : prev.toFixed(2)); break;
+            case 'pct': prevDisplay = (prev*100).toFixed(1)+'%'; break;
+            case 'float1': prevDisplay = (typeof prev === 'number' ? prev.toFixed(1) : prev); break;
+            default: prevDisplay = prev;
+        }
+        display += '<br><span class="metric-prev">上期 '+prevDisplay+'</span>';
+    }
+    return display;
+}
+
+function toggleSort(idx) {
+    if (sortColIdx === idx) sortDir *= -1;
+    else { sortColIdx = idx; sortDir = -1; }
+    render();
+}
+
+// 备注持久化 — HTTP API 共享 + localStorage 兜底缓存
+let _noteTimer = null;
+function saveNote(input) {
+    const spu = input.dataset.spu;
+    const val = input.value.trim();
+    // 1. 立即更新本地缓存 (localStorage 兜底)
+    try {
+        let notes = JSON.parse(localStorage.getItem('jd_notes') || '{}');
+        notes[spu] = val;
+        localStorage.setItem('jd_notes', JSON.stringify(notes));
+    } catch(e) {}
+    // 2. 同步更新内存数据 (currentData + __M 备份)
+    for (let r of currentData) {
+        if (r.spu === spu) { r.notes = val; break; }
+    }
+    if (__M[spu]) __M[spu][13] = val;
+    // 3. 防抖发送到共享服务器 (PATCH 增量更新)
+    clearTimeout(_noteTimer);
+    _noteTimer = setTimeout(() => {
+        fetch('/api/notes', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ spu: spu, note: val })
+        }).catch(() => {}); // 静默失败，本地已存
+    }, 600);
+}
+
+// Excel导出 (CSV with BOM for Excel compatibility)
+function exportExcel() {
+    let visCols = getVisCols();
+    let filtered = getFilteredData();
+    
+    // BOM for UTF-8 Excel recognition
+    let BOM = '\uFEFF';
+    let csv = BOM;
+    
+    // Header row
+    csv += visCols.map(c => '"'+c.label.replace(/"/g,'""')+'"').join(',') + '\n';
+    
+    // Data rows
+    for (let r of filtered) {
+        let row = [];
+        for (let c of visCols) {
+            let v = '';
+            switch(c.type) {
+                case 'img': v = r.img || ''; break;
+                case 'text': case 'notes': v = (r[c.id] || '').toString(); break;
+                case 'score': v = r.score; break;
+                case 'badge': v = r.decision; break;
+                case 'metric':
+                    v = r[c.id];
+                    if (v === null || v === undefined) v = '';
+                    else if (c.fmt === 'pct') v = (v*100).toFixed(1)+'%';
+                    else if (c.fmt === 'money') v = '¥'+v;
+                    break;
+                case 'wow':
+                    v = r[c.id];
+                    v = (v !== null && v !== undefined) ? (v*100).toFixed(1)+'%' : '';
+                    break;
+                default: v = (r[c.id] || '').toString();
+            }
+            row.push('"'+String(v).replace(/"/g,'""')+'"');
+        }
+        csv += row.join(',') + '\n';
+    }
+    
+    let blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement('a');
+    a.href = url;
+    a.download = '新品测款数据_' + new Date().toISOString().split('T')[0] + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// 导出备注 — 下载 notes.json，替换工作区文件后次日部署全员同步
+function exportNotes() {
+    let allNotes = {};
+    // 从 __M[13] 收集（applyDateRange 构建行时也从这里读）
+    for (let spu in __M) {
+        let note = __M[spu][13];
+        if (note && note.trim()) allNotes[spu] = note.trim();
+    }
+    // currentData 中可能有最新未回写 __M 的备注
+    for (let r of currentData) {
+        if (r.notes && r.notes.trim()) allNotes[r.spu] = r.notes.trim();
+    }
+    try {
+        let local = JSON.parse(localStorage.getItem('jd_notes') || '{}');
+        for (let k in local) {
+            if (local[k] && local[k].trim()) allNotes[k] = local[k].trim();
+        }
+    } catch(e) {}
+    
+    let blob = new Blob([JSON.stringify(allNotes, null, 2)], { type: 'application/json' });
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement('a');
+    a.href = url;
+    a.download = 'notes.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    let status = document.getElementById('noteSyncStatus');
+    status.textContent = '✅ 已下载 ' + Object.keys(allNotes).length + ' 条备注';
+    status.style.display = 'inline';
+    setTimeout(() => { status.style.display = 'none'; }, 3000);
+}
+
+// 检测备注API是否可用（共享模式 vs 本地模式）
+async function checkNoteAPI() {
+    try {
+        let resp = await fetch('/api/notes', { method: 'HEAD' });
+        return resp.ok;
+    } catch(e) {
+        return false;
+    }
+}
+
+document.addEventListener('keydown', function(e) { if (e.key==='Escape') closeModal(); });
+
+// ═══════ 数据展开：日粒度__DD → ALL_DATA（按周聚合用于默认视图） ═══════
+// 本地日期格式化（避免 toISOString 的 UTC 偏移 bug，中国时区 UTC+8 会导致日期差一天）
+function fmtLocalDate(d) {
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+// __DD: {spu: [[mmdd, uv, gmv, sales, cart, buyers, ad_spend, ad_gmv, ad_clicks, ad_imp], ...]}
+// mmdd格式: "0701" = 7月1日, "0620" = 6月20日（已按日期升序排序）
+// 二分查找：第一个 d[0] >= key 的下标（mmdd 字典序与日期序一致）
+function lowerBound(arr, key) {
+    let lo = 0, hi = arr.length;
+    while (lo < hi) {
+        let mid = (lo + hi) >> 1;
+        if (arr[mid][0] < key) lo = mid + 1; else hi = mid;
+    }
+    return lo;
+}
+// 二分查找：第一个 d[0] > key 的下标
+function upperBound(arr, key) {
+    let lo = 0, hi = arr.length;
+    while (lo < hi) {
+        let mid = (lo + hi) >> 1;
+        if (arr[mid][0] <= key) lo = mid + 1; else hi = mid;
+    }
+    return lo;
+}
+// 日期字符串转 mmdd："2026-07-01" → "0701"
+function toMMDD(dateStr) { return dateStr.slice(5,7) + dateStr.slice(8,10); }
+
+function aggregateDaily(spu, fromDate, toDate) {
+    let days = __DD[spu];
+    if (!days || days.length === 0) return null;
+    // 二分定位区间，只累加区间内元素（避免全量遍历 + 字符串构造）
+    let i0 = lowerBound(days, toMMDD(fromDate));
+    let i1 = upperBound(days, toMMDD(toDate));
+    if (i0 >= i1) return null;
+    let a = {u:0, g:0, sl:0, ca:0, by:0, as:0, ag:0, ac:0, ai:0, dc:0};
+    for (let i = i0; i < i1; i++) {
+        let d = days[i];
+        a.u += d[1]||0; a.g += d[2]||0; a.sl += d[3]||0;
+        a.ca += d[4]||0; a.by += d[5]||0;
+        a.as += d[6]||0; a.ag += d[7]||0; a.ac += d[8]||0; a.ai += d[9]||0;
+        a.dc++;
+    }
+    if (a.u === 0 && a.g === 0 && a.as === 0) return null;
+    return a;
+}
+
+// 加载备注：优先从共享API读取，本地缓存兜底
+async function loadNotes() {
+    let sharedNotes = {};
+    // 从共享服务器拉取
+    try {
+        let resp = await fetch('/api/notes');
+        if (resp.ok) sharedNotes = await resp.json();
+        // 同步写入localStorage作为离线缓存
+        localStorage.setItem('jd_notes', JSON.stringify(sharedNotes));
+    } catch(e) {
+        // API不可用时，降级到localStorage
+        try {
+            sharedNotes = JSON.parse(localStorage.getItem('jd_notes') || '{}');
+        } catch(e2) { sharedNotes = {}; }
+    }
+    // 合并到 __M（applyDateRange 构建行时从 __M[13] 读取）
+    for (let spu in __M) {
+        if (sharedNotes[spu]) __M[spu][13] = sharedNotes[spu];
+    }
+}
+
+// 直接初始化（不再全量展开周数据，applyDateRange 按需聚合）
+if (typeof __M === 'undefined' || typeof __DD === 'undefined') {
+    document.getElementById('tableBody').innerHTML = '<tr><td colspan="14" style="color:red;padding:20px">数据加载失败 - 请刷新页面</td></tr>';
+} else {
+    loadNotes().then(() => { init(); });
+}
+</script>
+</body>
+</html>

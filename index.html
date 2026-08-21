@@ -1858,7 +1858,11 @@ const TOTAL_REMAINING_COST = 17972180;
 const CAT_ST_DATA = {"连衣裙": 65.8, "衬衣": 71.7, "半身裙": 71.1, "针织衫": 75.1, "T恤": 79.3, "裤子": 72.3, "牛仔裤": 70.1, "套装": 61.1, "吊带 背心": 81.2, "外套 上衣": 68.6, "马夹": 74.6, "内衣类": 99.2, "围巾类": 0, "#N/A": 0};
 // 店铺销售数据（含标签/专供款维度）
 var STORE_SALES_DATA = {};
+// v4 分桶懒加载：初始空结构，桶按需 fetch（ensureBucket）后填充
 var DAILY_STORE_DATA = {"dates":[],"b0":{},"b1":{},"b2":{},"b3":{},"b4":{},"b5":{},"b6":{},"b7":{},"b8":{},"b9":{},"b10":{},"b11":{},"b12":{},"b13":{},"b14":{}};
+var DAILY_BUCKET_LOADED = {};   // 桶加载状态
+var DAILY_BUCKET_QUEUE = {};    // 桶加载等待队列
+var DAILY_DATES_LOADED = false;
 const STORE_LABEL_OPTIONS = ["奥莱款", "平销款", "平销款（线下代卖）", "拼团款", "新品", "清仓款", "滞销款", "爆款", "畅销款", "矩阵款", "策略款", "线下款"];
 const STORE_EXCLUSIVE_OPTIONS = ["产业联盟-流转", "产业联盟-爆畅新", "全网款", "唯品&拼多多专供款", "唯品专供款", "唯品专供款-库存料开款", "天猫/唯品", "天猫渠道", "小灯塔-唯品会专供", "抖音专供款-流转", "抖音专供款-爆畅新", "线下款"];
 const STORE_SEASON_OPTIONS = ["冬", "夏", "春", "秋"];
@@ -2424,8 +2428,11 @@ function onStoreTimeChange() {
   if (v === 'custom') {
     CUSTOM_DATE_MODE = true;
     if (wrap) wrap.style.display = '';
-    initCustomDates();
-    onCustomDateChange();
+    // v4 分桶懒加载：确保 dates 已加载再初始化日期选择器
+    ensureDailyDates(function() {
+      initCustomDates();
+      onCustomDateChange();
+    });
   } else {
     CUSTOM_DATE_MODE = false;
     if (wrap) wrap.style.display = 'none';
@@ -2474,6 +2481,15 @@ function sumDailyRange(entries, startIdx, endIdx) {
   }
   return [sales, cost];
 }
+
+// v4 分桶懒加载：dim → 桶 key 映射（与 renderStoreSalesTable 的 dim 决策链一致）
+var DAILY_DIM_BUCKET_MAP = {
+  'label': 'b1', 'exclusive': 'b2', 'season': 'b3', 'status': 'b4',
+  'label_exclusive': 'b5', 'label_status': 'b6', 'label_season': 'b7',
+  'exclusive_status': 'b8', 'exclusive_season': 'b9', 'status_season': 'b10',
+  'label_exclusive_status': 'b11', 'label_exclusive_season': 'b12',
+  'label_status_season': 'b13', 'exclusive_status_season': 'b14'
+};
 
 // 从 DAILY_STORE_DATA 按维度取数据
 function getDailyStoreData(store, field, startIdx, endIdx, dim, dimVals) {
@@ -2640,7 +2656,6 @@ function renderStoreSalesTable() {
   var exclSel = MSGetSelected('storeExclusive');
   var seasonSel = MSGetSelected('storeSeason');
   var statusSel = MSGetSelected('storeStatus');
-  console.log('[StoreTable] statusSel:', statusSel, 'seasonSel:', seasonSel, 'labelSel:', labelSel, 'exclSel:', exclSel);
   
   var timePeriod, comparePeriod, periodLabel;
   if (CUSTOM_DATE_MODE) {
@@ -2888,15 +2903,22 @@ function renderStoreSalesTable() {
     dim = 'label'; dimVals = labelSel;
   }
   
-  // 🔍 DIAGNOSTIC LOG
-  var _diag = [];
-  _diag.push('[DIAG] === Store Sales Diagnostic ===');
-  _diag.push('[DIAG] labelSel=' + JSON.stringify(labelSel) + ' all=' + labelAll + ' opts=' + labelOpts.length);
-  _diag.push('[DIAG] exclSel=' + JSON.stringify(exclSel) + ' all=' + exclAll + ' opts=' + exclOpts.length);
-  _diag.push('[DIAG] statusSel=' + JSON.stringify(statusSel) + ' all=' + statusAll + ' opts=' + statusOpts.length);
-  _diag.push('[DIAG] seasonSel=' + JSON.stringify(seasonSel) + ' all=' + seasonAll + ' opts=' + seasonOpts.length);
-  _diag.push('[DIAG] timePeriod=' + timePeriod + ' resolved dim=' + dim + ' dimVals=' + JSON.stringify(dimVals));
-  _diag.forEach(function(m) { console.log(m); });
+  // ── v4 分桶懒加载：自定义日期模式下确保所需桶已加载 ──
+  if (CUSTOM_DATE_MODE) {
+    if (!DAILY_DATES_LOADED) {
+      thead.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-secondary);">⏳ 正在加载日期数据...</td></tr>';
+      tbody.innerHTML = '';
+      ensureDailyDates(function() { if (typeof initCustomDates === 'function') initCustomDates(); renderStoreSalesTable(); });
+      return;
+    }
+    var neededB = dim ? (DAILY_DIM_BUCKET_MAP[dim] || 'b0') : 'b0';
+    if (neededB && !DAILY_BUCKET_LOADED[neededB]) {
+      thead.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-secondary);">⏳ 正在加载筛选数据...</td></tr>';
+      tbody.innerHTML = '';
+      ensureBucket(neededB, function() { renderStoreSalesTable(); });
+      return;
+    }
+  }
   
   var stores = Object.keys(STORE_SALES_DATA);
   
@@ -2915,10 +2937,6 @@ function renderStoreSalesTable() {
     var hbSalesAbs = sCur - sBase;  // 绝对增减销售额
     var hbCostAbs = cCur - cBase;  // 绝对增减成本额
     storeMetrics[s] = { sCur, cCur, mCur, mBase, hbSales, hbCost, hbSalesAbs, hbCostAbs };
-    // 🔍 茵曼旗舰店专项诊断
-    if (s === '茵曼旗舰店') {
-      console.log('[DIAG] 茵曼旗舰店: sCur=¥' + sCur.toFixed(2) + ' cCur=¥' + cCur.toFixed(2) + ' (' + (cCur/10000).toFixed(2) + '万) timePeriod=' + timePeriod);
-    }
   });
   
   // 计算合计成本占比
@@ -3974,19 +3992,19 @@ document.addEventListener('keydown', function(e) {
 </div>
 
 <script>
-// ====== 渐进式数据加载器（性能优化 v3） ======
+// ====== 渐进式数据加载器（性能优化 v4 分桶懒加载） ======
 // Tier 1: ITEMS → 立即显示概览+图表
 // Tier 2: STORE_SALES_DATA → 店铺销售表
-// Tier 3: DAILY_STORE_DATA → 自定义日期（后台静默加载）
-// Detail: 明细表默认折叠，按需展开
+// Tier 3: daily/dates.json + b0/b1 预加载（不阻塞）
+// Buckets: b2~b14 按需懒加载（ensureBucket）
+// Detail: 明细表隐藏
 (function() {
   var dataFiles = [
-    { key: 'ITEMS', file: 'data/items.json', size: 1199172, tier: 1 },
-    { key: 'STORE_SALES_DATA', file: 'data/store_sales_data.json', size: 1200846, tier: 2 },
-    { key: 'DAILY_STORE_DATA', file: 'data/daily_store_data.json', size: 4428275, tier: 3 }
+    { key: 'ITEMS', file: 'data/items.json', size: 1001829, tier: 1 },
+    { key: 'STORE_SALES_DATA', file: 'data/store_sales_data.json', size: 1200846, tier: 2 }
   ];
   var overlay = document.getElementById('dataLoadingOverlay');
-  var _v = '20260819_1787106260';
+  var _v = '20260819_1787126821';
   
   function hideOverlay() {
     if (overlay) {
@@ -4040,17 +4058,52 @@ document.addEventListener('keydown', function(e) {
       });
   }
   
-  // Tier 3: 后台加载 DAILY_STORE_DATA → 自定义日期功能
-  function loadTier3() {
-    return fetch(dataFiles[2].file + '?v=' + _v, { cache: 'reload' })
+  // ====== v4 分桶懒加载：daily 数据按桶按需加载 ======
+  // dates.json 首屏加载（2KB）；b0/b1 后台预加载（最常用：无筛选/单标签）
+  // 其余桶在用户切换筛选组合时由 ensureBucket 按需加载并缓存
+  function ensureDailyDates(cb) {
+    if (DAILY_DATES_LOADED) { if (cb) cb(); return; }
+    fetch('data/daily/dates.json?v=' + _v, { cache: 'reload' })
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        window['DAILY_STORE_DATA'] = data;
-        console.log('[Loader] Tier3 OK: DAILY_STORE_DATA ' + (data.dates?data.dates.length:0) + ' dates');
+        DAILY_STORE_DATA.dates = data.dates || [];
+        DAILY_DATES_LOADED = true;
+        console.log('[Loader] dates OK: ' + DAILY_STORE_DATA.dates.length + ' days');
+        if (cb) cb();
       })
       .catch(function(err) {
-        console.warn('[Loader] Tier3 failed:', err.message);
+        console.warn('[Loader] dates failed:', err.message);
+        if (cb) cb();
       });
+  }
+  
+  function ensureBucket(bkey, cb) {
+    if (DAILY_BUCKET_LOADED[bkey]) { if (cb) cb(); return; }
+    if (DAILY_BUCKET_QUEUE[bkey]) { DAILY_BUCKET_QUEUE[bkey].push(cb); return; }
+    DAILY_BUCKET_QUEUE[bkey] = [cb];
+    fetch('data/daily/' + bkey + '.json?v=' + _v, { cache: 'reload' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        DAILY_STORE_DATA[bkey] = data;
+        DAILY_BUCKET_LOADED[bkey] = true;
+        console.log('[Loader] bucket ' + bkey + ' OK');
+        var q = DAILY_BUCKET_QUEUE[bkey] || [];
+        DAILY_BUCKET_QUEUE[bkey] = null;
+        for (var i = 0; i < q.length; i++) if (q[i]) q[i]();
+      })
+      .catch(function(err) {
+        console.warn('[Loader] bucket ' + bkey + ' failed:', err.message);
+        var q = DAILY_BUCKET_QUEUE[bkey] || [];
+        DAILY_BUCKET_QUEUE[bkey] = null;
+        for (var i = 0; i < q.length; i++) if (q[i]) q[i]();
+      });
+  }
+  
+  // Tier 3: dates 立即加载 + b0/b1 预加载（不阻塞页面）
+  function loadTier3() {
+    ensureDailyDates();
+    ensureBucket('b0');
+    ensureBucket('b1');
   }
   
   // 初始化概览（ITEMS 加载完立即执行）

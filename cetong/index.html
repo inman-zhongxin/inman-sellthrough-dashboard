@@ -18,6 +18,12 @@ body{font-family:'Microsoft YaHei',sans-serif;background:#f0f2f5;color:#333}
 .card .lbl{font-size:10px;color:#888;margin-top:2px}
 
 .struct-wrap{display:flex;gap:14px;padding:0 24px 14px;flex-wrap:wrap}
+.struct-bar{display:flex;gap:8px;padding:0 24px 10px;flex-wrap:wrap;align-items:center;font-size:11px;color:#555}
+.struct-bar label{font-weight:600}
+.struct-bar input{padding:4px 8px;border:1px solid #d1d5db;border-radius:5px;font-size:11px;background:#fff}
+.struct-bar button{padding:4px 10px;border:1px solid #d1d5db;border-radius:5px;font-size:11px;background:#fff;cursor:pointer}
+.struct-bar button:hover{border-color:#2d6a9f;color:#2d6a9f}
+.struct-bar button.on{background:#2d6a9f;color:#fff;border-color:#2d6a9f}
 .struct-panel{flex:1;min-width:340px;background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);overflow:hidden}
 .struct-panel h3{font-size:13px;padding:9px 14px;margin:0;background:linear-gradient(135deg,#1a3a5c,#2d6a9f);color:#fff;font-weight:600}
 .struct-panel h3 .win{font-weight:400;font-size:10px;opacity:.85;margin-left:6px}
@@ -118,10 +124,21 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 <div class="card"><div class="num" style="color:#ef4444" id="statRed">-</div><div class="lbl">🔴 红灯</div></div>
 </div>
 
-<!-- 销售结构分析：类目 + 季节（占比与同比） -->
+<!-- 销售结构分析：类目 + 季节（占比与同比 · 支持时间筛选） -->
+<div class="struct-bar">
+<label>📅 时间窗口</label>
+<input type="date" id="structFrom" value="2026-07-01" min="2026-06-02" max="2026-09-06" onchange="renderStruct()">
+<span>~</span>
+<input type="date" id="structTo" value="2026-09-06" min="2026-06-02" max="2026-09-06" onchange="renderStruct()">
+<button onclick="structQuick(7)">近7天</button>
+<button onclick="structQuick(30)">近30天</button>
+<button onclick="structQuick(60)">近60天</button>
+<button onclick="structQuick(0)">全期</button>
+<span style="color:#999">同比 = 25年同月日（25年数据覆盖7/1-9/6）</span>
+</div>
 <div class="struct-wrap">
 <div class="struct-panel">
-<h3>📂 类目销售结构<span class="win">窗口 7/1-9/6 · 26年 vs 25年同期</span></h3>
+<h3>📂 类目销售结构<span class="win" id="structWinCat">窗口 7/1-9/6 · 26年 vs 25年同期</span></h3>
 <table id="structCat">
 <thead><tr>
 <th>品类</th><th>销售额(万)</th><th>销售占比</th><th>25同期</th><th>变化</th><th>流量UV(万)</th><th>流量占比</th><th>25同期</th><th>变化</th>
@@ -131,7 +148,7 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 <p class="struct-note">口径：店铺全店成交 · 销售占比=GMV占比，流量占比=UV占比 · 变化=26年-25年（百分点），<span class="chg-up">红升</span><span class="chg-down">绿降</span></p>
 </div>
 <div class="struct-panel">
-<h3>🍂 季节销售结构<span class="win">窗口 7/1-9/6 · 26年 vs 25年同期</span></h3>
+<h3>🍂 季节销售结构<span class="win" id="structWinSea">窗口 7/1-9/6 · 26年 vs 25年同期</span></h3>
 <table id="structSea">
 <thead><tr>
 <th>季节</th><th>销售额(万)</th><th>销售占比</th><th>25同期</th><th>变化</th><th>流量UV(万)</th><th>流量占比</th><th>25同期</th><th>变化</th>
@@ -347,18 +364,77 @@ function buildHeader() {
 }
 
 // ═══════ 初始化 ═══════
-// ── 销售结构表渲染（类目/季节 · 占比与同比） ──
+// ── 销售结构表渲染（类目/季节 · 占比与同比 · 时间筛选） ──
 function chgClass(v) { return v > 0.05 ? 'chg-up' : (v < -0.05 ? 'chg-down' : 'chg-flat'); }
 function fmtChg(v) { return (v > 0 ? '+' : '') + v.toFixed(1) + 'pp'; }
+function structAgg(daily, from, to, names) {
+    // 聚合窗口内数据
+    const agg = {};
+    names.forEach(n => agg[n] = [0, 0]);
+    for (const d in daily) {
+        if (d < from || d > to) continue;
+        const day = daily[d];
+        for (const k in day.c) { if (!(k in agg)) agg[k] = [0,0]; agg[k][0] += day.c[k][0]; agg[k][1] += day.c[k][1]; }
+        for (const k in day.s) { if (!(k in agg)) agg[k] = [0,0]; agg[k][0] += day.s[k][0]; agg[k][1] += day.s[k][1]; }
+    }
+    return agg;
+}
+function structQuick(days) {
+    // days=0 → 全期；否则以最新日期向前推N天
+    const S = (typeof __ST !== 'undefined') ? __ST : null;
+    if (!S) return;
+    const d26k = Object.keys(S.d26).sort();
+    if (!d26k.length) return;
+    const latest = d26k[d26k.length - 1];
+    let from;
+    if (days === 0) from = d26k[0];
+    else {
+        const t = new Date(latest); t.setDate(t.getDate() - (days - 1));
+        const y = t.getFullYear(), m = String(t.getMonth()+1).padStart(2,'0'), d = String(t.getDate()).padStart(2,'0');
+        from = y + '-' + m + '-' + d;
+    }
+    document.getElementById('structFrom').value = from;
+    document.getElementById('structTo').value = latest;
+    renderStruct();
+    // 按钮高亮
+    document.querySelectorAll('.struct-bar button').forEach(b => b.classList.remove('on'));
+    event && event.target && event.target.classList.add('on');
+}
 function renderStruct() {
     const S = (typeof __ST !== 'undefined') ? __ST : null;
     if (!S) return;
-    function fill(tid, rows) {
+    let from = (document.getElementById('structFrom') || {value:'2026-07-01'}).value || '2026-07-01';
+    let to = (document.getElementById('structTo') || {value:'2026-09-06'}).value || '2026-09-06';
+    if (from > to) { const t = from; from = to; to = t; }
+    // 同比对齐：25年同月日（25年无该日期则跳过）
+    const mmddFrom = from.slice(5), mmddTo = to.slice(5);
+    const y25from = '2025-' + mmddFrom, y25to = '2025-' + mmddTo;
+    const cats = S.cats || [], seas = S.seas || [];
+    const a26c = structAgg(S.d26, from, to, cats);
+    const a25c = structAgg(S.d25, y25from, y25to, cats);
+    const a26s = structAgg(S.d26, from, to, seas);
+    const a25s = structAgg(S.d25, y25from, y25to, seas);
+    const mmFrom = from.slice(5).replace('-','/'), mmTo = to.slice(5).replace('-','/');
+    const winTxt = '窗口 ' + mmFrom + '-' + mmTo;
+    const wc = document.getElementById('structWinCat'); if (wc) wc.textContent = winTxt + ' · 26年 vs 25年同期';
+    const ws = document.getElementById('structWinSea'); if (ws) ws.textContent = winTxt + ' · 26年 vs 25年同期';
+    function build(agg26, agg25, names) {
+        let tg26 = 0, tu26 = 0, tg25 = 0, tu25 = 0;
+        names.forEach(n => { tg26 += agg26[n][0]; tu26 += agg26[n][1]; tg25 += agg25[n][0]; tu25 += agg25[n][1]; });
+        const rows = names.filter(n => agg26[n][0] > 0 || agg25[n][0] > 0 || agg26[n][1] > 0 || agg25[n][1] > 0)
+            .map(n => {
+                const g26 = agg26[n][0], u26 = agg26[n][1], g25 = agg25[n][0], u25 = agg25[n][1];
+                const p26g = tg26 ? g26/tg26*100 : 0, p25g = tg25 ? g25/tg25*100 : 0;
+                const p26u = tu26 ? u26/tu26*100 : 0, p25u = tu25 ? u25/tu25*100 : 0;
+                return [n, g26/10000, p26g, p25g, p26g-p25g, u26/10000, p26u, p25u, p26u-p25u];
+            });
+        rows.sort((a,b) => b[1] - a[1]);
+        return {rows: rows, tg: tg26/10000, tu: tu26/10000};
+    }
+    function fill(tid, rows, tg, tu) {
         const tb = document.getElementById(tid).getElementsByTagName('tbody')[0];
-        if (!tb || !rows.length) return;
+        if (!tb) return;
         let html = '';
-        let tg = 0, tu = 0;
-        rows.forEach(r => { tg += r[1]; tu += r[5]; });
         html += '<tr class="total"><td>合计</td><td>' + tg.toFixed(1) + '</td><td>100%</td><td>100%</td><td>—</td><td>' + tu.toFixed(1) + '</td><td>100%</td><td>100%</td><td>—</td></tr>';
         rows.forEach(r => {
             html += '<tr><td>' + r[0] + '</td>'
@@ -374,8 +450,10 @@ function renderStruct() {
         });
         tb.innerHTML = html;
     }
-    fill('structCat', S.cat || []);
-    fill('structSea', S.sea || []);
+    const rc = build(a26c, a25c, cats);
+    const rs = build(a26s, a25s, seas);
+    fill('structCat', rc.rows, rc.tg, rc.tu);
+    fill('structSea', rs.rows, rs.tg, rs.tu);
 }
 
 function init() {

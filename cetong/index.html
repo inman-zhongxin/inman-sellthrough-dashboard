@@ -17,6 +17,25 @@ body{font-family:'Microsoft YaHei',sans-serif;background:#f0f2f5;color:#333}
 .card .num{font-size:26px;font-weight:700}
 .card .lbl{font-size:10px;color:#888;margin-top:2px}
 
+.struct-wrap{display:flex;gap:14px;padding:0 24px 14px;flex-wrap:wrap}
+.struct-panel{flex:1;min-width:340px;background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);overflow:hidden}
+.struct-panel h3{font-size:13px;padding:9px 14px;margin:0;background:linear-gradient(135deg,#1a3a5c,#2d6a9f);color:#fff;font-weight:600}
+.struct-panel h3 .win{font-weight:400;font-size:10px;opacity:.85;margin-left:6px}
+.struct-panel table{width:100%;border-collapse:collapse;font-size:11px}
+.struct-panel th{background:#f8fafc;padding:5px 7px;border-bottom:2px solid #e5e7eb;font-weight:600;color:#444;text-align:right;white-space:nowrap}
+.struct-panel th:first-child,.struct-panel td:first-child{text-align:left}
+.struct-panel td{padding:4px 7px;border-bottom:1px solid #f1f5f9;text-align:right;white-space:nowrap}
+.struct-panel tbody tr:hover{background:#f8fbfe}
+.struct-panel tr.total td{background:#eef6fb;font-weight:700;border-top:2px solid #cfe3f5}
+.chg-up{color:#dc2626;font-weight:600}
+.chg-down{color:#16a34a;font-weight:600}
+.chg-flat{color:#9ca3af}
+.struct-note{font-size:10px;color:#888;padding:6px 14px 8px;margin:0}
+@media (max-width:768px){
+.struct-wrap{flex-direction:column;padding:0 10px 12px}
+.struct-panel{min-width:0}
+}
+
 .filters{display:flex;gap:8px;padding:0 24px 12px;flex-wrap:wrap;align-items:center}
 .filters select,.filters input{padding:5px 8px;border:1px solid #d1d5db;border-radius:5px;font-size:11px;background:#fff}
 .filters label{font-size:11px;font-weight:600;color:#555;margin-right:-4px}
@@ -97,6 +116,30 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 <div class="card"><div class="num" style="color:#22c55e" id="statGreen">-</div><div class="lbl">🟢 绿灯</div></div>
 <div class="card"><div class="num" style="color:#eab308" id="statYellow">-</div><div class="lbl">🟡 黄灯</div></div>
 <div class="card"><div class="num" style="color:#ef4444" id="statRed">-</div><div class="lbl">🔴 红灯</div></div>
+</div>
+
+<!-- 销售结构分析：类目 + 季节（占比与同比） -->
+<div class="struct-wrap">
+<div class="struct-panel">
+<h3>📂 类目销售结构<span class="win">窗口 7/1-9/6 · 26年 vs 25年同期</span></h3>
+<table id="structCat">
+<thead><tr>
+<th>品类</th><th>销售额(万)</th><th>销售占比</th><th>25同期</th><th>变化</th><th>流量UV(万)</th><th>流量占比</th><th>25同期</th><th>变化</th>
+</tr></thead>
+<tbody><tr><td colspan="9" style="text-align:center;color:#888">加载中...</td></tr></tbody>
+</table>
+<p class="struct-note">口径：店铺全店成交 · 销售占比=GMV占比，流量占比=UV占比 · 变化=26年-25年（百分点），<span class="chg-up">红升</span><span class="chg-down">绿降</span></p>
+</div>
+<div class="struct-panel">
+<h3>🍂 季节销售结构<span class="win">窗口 7/1-9/6 · 26年 vs 25年同期</span></h3>
+<table id="structSea">
+<thead><tr>
+<th>季节</th><th>销售额(万)</th><th>销售占比</th><th>25同期</th><th>变化</th><th>流量UV(万)</th><th>流量占比</th><th>25同期</th><th>变化</th>
+</tr></thead>
+<tbody><tr><td colspan="9" style="text-align:center;color:#888">加载中...</td></tr></tbody>
+</table>
+<p class="struct-note">口径：店铺全店成交 · 季节=商品销售季节属性，25年款按26年标签反查（匹配率99.8%），<span class="chg-up">红升</span><span class="chg-down">绿降</span></p>
+</div>
 </div>
 
 <!-- 评分模型说明 -->
@@ -304,8 +347,40 @@ function buildHeader() {
 }
 
 // ═══════ 初始化 ═══════
+// ── 销售结构表渲染（类目/季节 · 占比与同比） ──
+function chgClass(v) { return v > 0.05 ? 'chg-up' : (v < -0.05 ? 'chg-down' : 'chg-flat'); }
+function fmtChg(v) { return (v > 0 ? '+' : '') + v.toFixed(1) + 'pp'; }
+function renderStruct() {
+    const S = (typeof __ST !== 'undefined') ? __ST : null;
+    if (!S) return;
+    function fill(tid, rows) {
+        const tb = document.getElementById(tid).getElementsByTagName('tbody')[0];
+        if (!tb || !rows.length) return;
+        let html = '';
+        let tg = 0, tu = 0;
+        rows.forEach(r => { tg += r[1]; tu += r[5]; });
+        html += '<tr class="total"><td>合计</td><td>' + tg.toFixed(1) + '</td><td>100%</td><td>100%</td><td>—</td><td>' + tu.toFixed(1) + '</td><td>100%</td><td>100%</td><td>—</td></tr>';
+        rows.forEach(r => {
+            html += '<tr><td>' + r[0] + '</td>'
+                + '<td>' + r[1].toFixed(1) + '</td>'
+                + '<td>' + r[2].toFixed(1) + '%</td>'
+                + '<td>' + r[3].toFixed(1) + '%</td>'
+                + '<td class="' + chgClass(r[4]) + '">' + fmtChg(r[4]) + '</td>'
+                + '<td>' + r[5].toFixed(1) + '</td>'
+                + '<td>' + r[6].toFixed(1) + '%</td>'
+                + '<td>' + r[7].toFixed(1) + '%</td>'
+                + '<td class="' + chgClass(r[8]) + '">' + fmtChg(r[8]) + '</td>'
+                + '</tr>';
+        });
+        tb.innerHTML = html;
+    }
+    fill('structCat', S.cat || []);
+    fill('structSea', S.sea || []);
+}
+
 function init() {
     try {
+        renderStruct();
         document.getElementById('dateFrom').value = currentWeek;
         let parts = currentWeek.split('-');
         let endD = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2])+6);

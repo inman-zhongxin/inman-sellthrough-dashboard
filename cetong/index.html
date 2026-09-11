@@ -104,6 +104,28 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 .modal.show{display:flex}
 .modal img{max-width:90vw;max-height:90vh;border-radius:8px;box-shadow:0 4px 30px rgba(0,0,0,.3)}
 .modal .close{position:absolute;top:20px;right:30px;color:#fff;font-size:32px;cursor:pointer}
+/* 单品趋势弹窗 */
+.tbl-wrap tbody tr{cursor:pointer}
+.tbl-wrap tbody tr:hover{background:#f0f6fc}
+#trendModal .tbox{background:#fff;border-radius:12px;width:min(860px,94vw);max-height:92vh;overflow-y:auto;position:relative;box-shadow:0 8px 40px rgba(0,0,0,.35)}
+#trendModal .tbox .close{position:sticky;top:0;float:right;color:#999;font-size:28px;cursor:pointer;margin:8px 14px 0 0;z-index:3}
+.t-head{display:flex;gap:14px;align-items:flex-start;padding:14px 18px 0}
+.t-head img{width:88px;height:88px;object-fit:cover;border-radius:8px;border:1px solid #eee;flex-shrink:0}
+.t-info{flex:1;min-width:0}
+.t-info h2{font-size:16px;margin:0 0 6px;color:#1f2937}
+.t-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.t-meta span{font-size:11px;background:#f3f4f6;color:#4b5563;border-radius:4px;padding:3px 8px}
+.t-tabs{display:flex;gap:6px;padding:10px 18px 0;flex-wrap:wrap}
+.t-tabs button{border:1px solid #e5e7eb;background:#fff;color:#4b5563;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer}
+.t-tabs button.on{background:#1f4e79;color:#fff;border-color:#1f4e79}
+.t-chart{padding:6px 14px 0}
+.t-sum{padding:0 18px 10px;font-size:12px;color:#6b7280;display:flex;flex-wrap:wrap;gap:10px}
+.t-sum b{color:#1f2937}
+.t-tbl{padding:0 18px 18px;overflow-x:auto}
+.t-tbl table{width:100%;border-collapse:collapse;font-size:12px}
+.t-tbl th{background:#f8fafc;color:#4b5563;padding:6px 8px;border:1px solid #e5e7eb;text-align:right;white-space:nowrap}
+.t-tbl th:first-child,.t-tbl td:first-child{text-align:left}
+.t-tbl td{padding:5px 8px;border:1px solid #eef2f7;text-align:right;white-space:nowrap;color:#374151}
 
 .footer{text-align:center;padding:16px;font-size:10px;color:#aaa}
 .note{background:#fef9c3;border-left:4px solid #eab308;padding:8px 14px;border-radius:4px;font-size:11px;margin:0 24px 12px}
@@ -284,7 +306,15 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 <img id="modalImg" src="">
 </div>
 
-<div class="footer">茵曼 2026秋冬测款 v3 | 数据来源: 京东商智日粒度 | 点击表头排序 | 双击图片放大</div>
+<!-- 单品近15天趋势弹窗 -->
+<div class="modal" id="trendModal" onclick="if(event.target===this)closeTrend()">
+<div class="tbox">
+<span class="close" onclick="closeTrend()">&times;</span>
+<div id="trendBody">加载中...</div>
+</div>
+</div>
+
+<div class="footer">茵曼 2026秋冬测款 v3 | 数据来源: 京东商智日粒度 | 点击表头排序 | 双击图片放大 | 单击行查看近15天趋势</div>
 
 <script src="data.js"></script>
 <script>
@@ -747,7 +777,7 @@ function render() {
     let pageRows = filtered.slice((curPage-1) * PAGE_SIZE, curPage * PAGE_SIZE);
     let html = '';
     for (let r of pageRows) {
-        html += '<tr>';
+        html += '<tr data-spu="${r.spu}">';
         for (let c of visCols) {
             html += renderCell(r, c);
         }
@@ -765,7 +795,7 @@ function renderCell(r, col) {
     let paidClass = col.paid ? ' class="col-paid"' : '';
     switch(col.type) {
         case 'img': 
-            return r.img ? `<td class="img-cell" ondblclick="openImg('${r.img}')"><img src="${r.img}" loading="lazy" decoding="async" onerror="this.style.display='none'"></td>` : '<td></td>';
+            return r.img ? `<td class="img-cell" onclick="event.stopPropagation()" ondblclick="openImg('${r.img}')"><img src="${r.img}" loading="lazy" decoding="async" onerror="this.style.display='none'"></td>` : '<td></td>';
         case 'text':
             return '<td'+paidClass+'><b>'+r[col.id]+'</b></td>';
         case 'score':
@@ -937,7 +967,7 @@ async function checkNoteAPI() {
     }
 }
 
-document.addEventListener('keydown', function(e) { if (e.key==='Escape') closeModal(); });
+document.addEventListener('keydown', function(e) { if (e.key==='Escape') { closeModal(); closeTrend(); } });
 
 // ═══════ 数据展开：日粒度__DD → ALL_DATA（按周聚合用于默认视图） ═══════
 // 本地日期格式化（避免 toISOString 的 UTC 偏移 bug，中国时区 UTC+8 会导致日期差一天）
@@ -986,6 +1016,166 @@ function aggregateDaily(spu, fromDate, toDate) {
     if (a.u === 0 && a.g === 0 && a.as === 0) return null;
     return a;
 }
+
+// ═══════ 单品近15天趋势弹窗 ═══════
+// 指标定义: idx 对应日数组下标; -1=转化率(buyers/UV)
+const TREND_METRICS = [
+    {id:'gmv',  label:'GMV',      unit:'元', idx:2},
+    {id:'uv',   label:'UV',       unit:'人', idx:1},
+    {id:'cart', label:'加购',     unit:'件', idx:4},
+    {id:'sales',label:'成交件数', unit:'件', idx:3},
+    {id:'cvr',  label:'转化率',   unit:'%',  idx:-1},
+    {id:'aspend',label:'广告花费',unit:'元', idx:6},
+    {id:'adgmv',label:'广告GMV',  unit:'元', idx:7},
+];
+let trendMetricIdx = 0;
+let _trendDays = null;
+
+function openTrend(spu) {
+    let r = null;
+    for (let x of currentData) { if (x.spu === spu) { r = x; break; } }
+    let days = __DD[spu];
+    if (!days || !days.length) { alert('该款暂无日粒度数据'); return; }
+    _trendDays = days.slice(-15);
+    trendMetricIdx = 0;
+    let item = r ? r.item : spu;
+    let img = r && r.img ? r.img : '';
+    let badge = r && r.decision ? getBadge(r.decision) : '';
+    let cat = r ? (r.v5_cat || r.tag_cat || '') : '';
+    let season = r ? (r.sale_season || '') : '';
+    let status = r ? (r.sale_status || '') : '';
+    let label = r ? (r.final_label || '') : '';
+    let tabs = '';
+    TREND_METRICS.forEach((m, i) => {
+        tabs += '<button id="tmt'+i+'" class="'+(i===0?'on':'')+'" onclick="switchTrendMetric('+i+')">'+m.label+'</button>';
+    });
+    let html = '<div class="t-head">'
+        + (img ? '<img src="'+img+'" loading="lazy" onclick="openImg(\''+img+'\')" onerror="this.style.display=\'none\'" title="点击放大" style="cursor:zoom-in">' : '')
+        + '<div class="t-info"><h2>'+item+'</h2>'
+        + '<div class="t-meta">'
+        + (badge ? '<span>'+badge+'</span>' : '')
+        + '<span>SPU: '+spu+'</span>'
+        + (cat ? '<span>'+cat+'</span>' : '')
+        + (season ? '<span>'+season+'</span>' : '')
+        + (status ? '<span>'+status+'</span>' : '')
+        + (label ? '<span>'+label+'</span>' : '')
+        + '</div></div></div>'
+        + '<div class="t-tabs">'+tabs+'</div>'
+        + '<div class="t-chart" id="trendChart"></div>'
+        + '<div class="t-sum" id="trendSum"></div>'
+        + '<div class="t-tbl" id="trendTbl"></div>';
+    document.getElementById('trendBody').innerHTML = html;
+    document.getElementById('trendModal').classList.add('show');
+    renderTrend();
+}
+
+function closeTrend() {
+    document.getElementById('trendModal').classList.remove('show');
+}
+
+function switchTrendMetric(i) {
+    trendMetricIdx = i;
+    TREND_METRICS.forEach((m, j) => {
+        let b = document.getElementById('tmt'+j);
+        if (b) b.className = (j===i ? 'on' : '');
+    });
+    renderTrend();
+}
+
+function _trendVal(d, m) {
+    // d: [mmdd, uv, gmv, sales, cart, buyers, ad_spend, ad_gmv, ad_clicks, ad_imp]
+    if (m.idx === -1) return d[1] > 0 ? d[5] / d[1] * 100 : 0;
+    return d[m.idx] || 0;
+}
+
+function fmtMMDD(mmdd) { return parseInt(mmdd.slice(0,2)) + '/' + parseInt(mmdd.slice(2,4)); }
+function fmtMoney2(v) { return '¥' + Math.round(v).toLocaleString(); }
+function _fmtTrend(v, m) {
+    if (m.id === 'cvr') return v.toFixed(1) + '%';
+    if (v >= 10000) return (v/10000).toFixed(1) + '万';
+    return Math.round(v).toLocaleString();
+}
+function _fmtAxis(v, m) {
+    if (m.id === 'cvr') return v.toFixed(0) + '%';
+    if (v >= 10000) return (v/10000).toFixed(0) + '万';
+    return Math.round(v).toString();
+}
+
+function renderTrend() {
+    if (!_trendDays || !_trendDays.length) return;
+    let m = TREND_METRICS[trendMetricIdx];
+    let days = _trendDays;
+    let W = 680, H = 240, PL = 52, PR = 14, PT = 16, PB = 30;
+    let vals = days.map(d => _trendVal(d, m));
+    let vmax = Math.max.apply(null, vals.concat([0]));
+    if (vmax <= 0) vmax = 1;
+    let step = vmax / 4;
+    let mag = Math.pow(10, Math.floor(Math.log(step) / Math.LN10));
+    let norm = step / mag;
+    let nice = norm <= 1 ? 1 : (norm <= 2 ? 2 : (norm <= 2.5 ? 2.5 : (norm <= 5 ? 5 : 10)));
+    step = nice * mag;
+    let ymax = Math.ceil(vmax / step) * step;
+    let iw = W - PL - PR, ih = H - PT - PB;
+    let n = days.length;
+    let xAt = i => PL + (n === 1 ? iw / 2 : i * iw / (n - 1));
+    let yAt = v => PT + ih - (v / ymax) * ih;
+    let svg = '';
+    for (let k = 0; k <= 4; k++) {
+        let yv = ymax / 4 * k, y = yAt(yv);
+        svg += '<line x1="'+PL+'" y1="'+y.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+y.toFixed(1)+'" stroke="#eef2f7" stroke-width="1"/>';
+        svg += '<text x="'+(PL-6)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end" font-size="10" fill="#9ca3af">'+_fmtAxis(yv, m)+'</text>';
+    }
+    let skip = Math.ceil(n / 7);
+    for (let i = 0; i < n; i += skip) {
+        svg += '<text x="'+xAt(i).toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle" font-size="10" fill="#9ca3af">'+fmtMMDD(days[i][0])+'</text>';
+    }
+    let pts = days.map((d, i) => xAt(i).toFixed(1) + ',' + yAt(vals[i]).toFixed(1)).join(' ');
+    let area = 'M'+xAt(0).toFixed(1)+','+(PT+ih)+' L'+pts.split(' ').join(' L')+' L'+xAt(n-1).toFixed(1)+','+(PT+ih)+' Z';
+    svg += '<defs><linearGradient id="tg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22a6a0" stop-opacity="0.25"/><stop offset="1" stop-color="#22a6a0" stop-opacity="0.02"/></linearGradient></defs>';
+    svg += '<path d="'+area+'" fill="url(#tg1)"/>';
+    svg += '<polyline points="'+pts+'" fill="none" stroke="#22a6a0" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>';
+    for (let i = 0; i < n; i++) {
+        let x = xAt(i), y = yAt(vals[i]);
+        svg += '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(i===n-1?4:2.6)+'" fill="#fff" stroke="#22a6a0" stroke-width="1.8"/>';
+        if (i === n-1) {
+            svg += '<text x="'+Math.min(x+8, W-44)+'" y="'+Math.max(y-8, 12)+'" font-size="11" fill="#1f2937" font-weight="bold">'+_fmtTrend(vals[i], m)+'</text>';
+        }
+    }
+    svg += '<text x="'+(PL-6)+'" y="'+(PT-4)+'" text-anchor="end" font-size="10" fill="#9ca3af">'+m.unit+'</text>';
+    document.getElementById('trendChart').innerHTML = '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block">'+svg+'</svg>';
+    // 汇总
+    let totU = days.reduce((s,d)=>s+d[1],0), totG = days.reduce((s,d)=>s+d[2],0);
+    let totS = days.reduce((s,d)=>s+d[3],0), totC = days.reduce((s,d)=>s+d[4],0);
+    let totB = days.reduce((s,d)=>s+d[5],0), totAs = days.reduce((s,d)=>s+d[6],0);
+    let totAg = days.reduce((s,d)=>s+d[7],0);
+    document.getElementById('trendSum').innerHTML =
+        '<span>窗口 <b>'+n+'天</b>（'+fmtMMDD(days[0][0])+' ~ '+fmtMMDD(days[n-1][0])+'）</span>'
+        + '<span>GMV合计 <b>'+fmtMoney2(totG)+'</b></span>'
+        + '<span>UV合计 <b>'+totU.toLocaleString()+'</b></span>'
+        + '<span>件数 <b>'+totS.toLocaleString()+'</b></span>'
+        + '<span>加购 <b>'+totC.toLocaleString()+'</b></span>'
+        + '<span>买家 <b>'+totB.toLocaleString()+'</b></span>'
+        + '<span>转化率 <b>'+(totU>0?(totB/totU*100).toFixed(1):'0.0')+'%</b></span>'
+        + '<span>广告花费 <b>'+fmtMoney2(totAs)+'</b></span>'
+        + '<span>广告GMV <b>'+fmtMoney2(totAg)+'</b></span>';
+    // 明细表（倒序，最新在前）
+    let th = '<tr><th>日期</th><th>UV</th><th>GMV</th><th>件数</th><th>加购</th><th>买家</th><th>转化率</th><th>广告花费</th><th>广告GMV</th><th>广告ROI</th></tr>';
+    let trs = '';
+    for (let i = n-1; i >= 0; i--) {
+        let d = days[i];
+        let cvr = d[1] > 0 ? (d[5]/d[1]*100).toFixed(1)+'%' : '-';
+        let roi = d[6] > 0 ? (d[7]/d[6]).toFixed(1) : '-';
+        trs += '<tr><td>'+fmtMMDD(d[0])+'</td><td>'+d[1].toLocaleString()+'</td><td>'+fmtMoney2(d[2])+'</td><td>'+d[3]+'</td><td>'+d[4]+'</td><td>'+d[5]+'</td><td>'+cvr+'</td><td>'+fmtMoney2(d[6])+'</td><td>'+fmtMoney2(d[7])+'</td><td>'+roi+'</td></tr>';
+    }
+    document.getElementById('trendTbl').innerHTML = '<table><thead>'+th+'</thead><tbody>'+trs+'</tbody></table>';
+}
+
+// 行点击 → 单品趋势（事件委托，分页后依然有效）
+document.getElementById('tableBody').addEventListener('click', function(e) {
+    if (e.target.tagName === 'INPUT') return;   // 备注输入框不触发
+    let tr = e.target.closest('tr[data-spu]');
+    if (tr) openTrend(tr.getAttribute('data-spu'));
+});
 
 // 加载备注：优先从共享API读取，本地缓存兜底
 async function loadNotes() {

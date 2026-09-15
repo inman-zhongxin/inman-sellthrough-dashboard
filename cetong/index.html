@@ -163,21 +163,21 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 <h3>📂 类目销售结构<span class="win" id="structWinCat">窗口 7/1-9/6 · 26年 vs 25年同期</span></h3>
 <table id="structCat">
 <thead><tr>
-<th>品类</th><th>销售额(万)</th><th>销售占比</th><th>25同期</th><th>变化</th><th>流量UV(万)</th><th>流量占比</th><th>25同期</th><th>变化</th>
+<th>品类</th><th>销售额(万)</th><th>销售占比</th><th>25同期</th><th>变化</th><th>流量UV(万)</th><th>流量占比</th><th>25同期</th><th>变化</th><th>消耗(万)</th><th>消耗占比</th>
 </tr></thead>
-<tbody><tr><td colspan="9" style="text-align:center;color:#888">加载中...</td></tr></tbody>
+<tbody><tr><td colspan="11" style="text-align:center;color:#888">加载中...</td></tr></tbody>
 </table>
-<p class="struct-note">口径：店铺全店成交 · 销售占比=GMV占比，流量占比=UV占比 · 变化=26年-25年（百分点），<span class="chg-up">红升</span><span class="chg-down">绿降</span></p>
+<p class="struct-note">口径：店铺全店成交 · 销售占比=GMV占比，流量占比=UV占比 · 消耗=付费推广消耗金额（26年付费数据，25年无付费口径） · 变化=26年-25年（百分点），<span class="chg-up">红升</span><span class="chg-down">绿降</span></p>
 </div>
 <div class="struct-panel">
 <h3>🍂 季节销售结构<span class="win" id="structWinSea">窗口 7/1-9/6 · 26年 vs 25年同期</span></h3>
 <table id="structSea">
 <thead><tr>
-<th>季节</th><th>销售额(万)</th><th>销售占比</th><th>25同期</th><th>变化</th><th>流量UV(万)</th><th>流量占比</th><th>25同期</th><th>变化</th>
+<th>季节</th><th>销售额(万)</th><th>销售占比</th><th>25同期</th><th>变化</th><th>流量UV(万)</th><th>流量占比</th><th>25同期</th><th>变化</th><th>消耗(万)</th><th>消耗占比</th>
 </tr></thead>
-<tbody><tr><td colspan="9" style="text-align:center;color:#888">加载中...</td></tr></tbody>
+<tbody><tr><td colspan="11" style="text-align:center;color:#888">加载中...</td></tr></tbody>
 </table>
-<p class="struct-note">口径：店铺全店成交 · 季节=商品销售季节属性，25年款按26年标签反查（匹配率99.8%），<span class="chg-up">红升</span><span class="chg-down">绿降</span></p>
+<p class="struct-note">口径：店铺全店成交 · 季节=商品销售季节属性，25年款按26年标签反查（匹配率99.8%） · 消耗=付费推广消耗金额（26年付费数据，25年无付费口径），<span class="chg-up">红升</span><span class="chg-down">绿降</span></p>
 </div>
 </div>
 
@@ -400,12 +400,12 @@ function fmtChg(v) { return (v > 0 ? '+' : '') + v.toFixed(1) + 'pp'; }
 function structAgg(daily, from, to, names) {
     // 聚合窗口内数据
     const agg = {};
-    names.forEach(n => agg[n] = [0, 0]);
+    names.forEach(n => agg[n] = [0, 0, 0]);
     for (const d in daily) {
         if (d < from || d > to) continue;
         const day = daily[d];
-        for (const k in day.c) { if (!(k in agg)) agg[k] = [0,0]; agg[k][0] += day.c[k][0]; agg[k][1] += day.c[k][1]; }
-        for (const k in day.s) { if (!(k in agg)) agg[k] = [0,0]; agg[k][0] += day.s[k][0]; agg[k][1] += day.s[k][1]; }
+        for (const k in day.c) { if (!(k in agg)) agg[k] = [0,0,0]; agg[k][0] += day.c[k][0]; agg[k][1] += day.c[k][1]; agg[k][2] += (day.c[k][2]||0); }
+        for (const k in day.s) { if (!(k in agg)) agg[k] = [0,0,0]; agg[k][0] += day.s[k][0]; agg[k][1] += day.s[k][1]; agg[k][2] += (day.s[k][2]||0); }
     }
     return agg;
 }
@@ -449,23 +449,24 @@ function renderStruct() {
     const wc = document.getElementById('structWinCat'); if (wc) wc.textContent = winTxt + ' · 26年 vs 25年同期';
     const ws = document.getElementById('structWinSea'); if (ws) ws.textContent = winTxt + ' · 26年 vs 25年同期';
     function build(agg26, agg25, names) {
-        let tg26 = 0, tu26 = 0, tg25 = 0, tu25 = 0;
-        names.forEach(n => { tg26 += agg26[n][0]; tu26 += agg26[n][1]; tg25 += agg25[n][0]; tu25 += agg25[n][1]; });
+        let tg26 = 0, tu26 = 0, ts26 = 0, tg25 = 0, tu25 = 0;
+        names.forEach(n => { tg26 += agg26[n][0]; tu26 += agg26[n][1]; ts26 += (agg26[n][2]||0); tg25 += agg25[n][0]; tu25 += agg25[n][1]; });
         const rows = names.filter(n => agg26[n][0] > 0 || agg25[n][0] > 0 || agg26[n][1] > 0 || agg25[n][1] > 0)
             .map(n => {
-                const g26 = agg26[n][0], u26 = agg26[n][1], g25 = agg25[n][0], u25 = agg25[n][1];
+                const g26 = agg26[n][0], u26 = agg26[n][1], s26 = (agg26[n][2]||0), g25 = agg25[n][0], u25 = agg25[n][1];
                 const p26g = tg26 ? g26/tg26*100 : 0, p25g = tg25 ? g25/tg25*100 : 0;
                 const p26u = tu26 ? u26/tu26*100 : 0, p25u = tu25 ? u25/tu25*100 : 0;
-                return [n, g26/10000, p26g, p25g, p26g-p25g, u26/10000, p26u, p25u, p26u-p25u];
+                const p26s = ts26 ? s26/ts26*100 : 0;
+                return [n, g26/10000, p26g, p25g, p26g-p25g, u26/10000, p26u, p25u, p26u-p25u, s26/10000, p26s];
             });
         rows.sort((a,b) => b[1] - a[1]);
-        return {rows: rows, tg: tg26/10000, tu: tu26/10000};
+        return {rows: rows, tg: tg26/10000, tu: tu26/10000, ts: ts26/10000};
     }
-    function fill(tid, rows, tg, tu) {
+    function fill(tid, rows, tg, tu, ts) {
         const tb = document.getElementById(tid).getElementsByTagName('tbody')[0];
         if (!tb) return;
         let html = '';
-        html += '<tr class="total"><td>合计</td><td>' + tg.toFixed(1) + '</td><td>100%</td><td>100%</td><td>—</td><td>' + tu.toFixed(1) + '</td><td>100%</td><td>100%</td><td>—</td></tr>';
+        html += '<tr class="total"><td>合计</td><td>' + tg.toFixed(1) + '</td><td>100%</td><td>100%</td><td>—</td><td>' + tu.toFixed(1) + '</td><td>100%</td><td>100%</td><td>—</td><td>' + ts.toFixed(2) + '</td><td>100%</td></tr>';
         rows.forEach(r => {
             html += '<tr><td>' + r[0] + '</td>'
                 + '<td>' + r[1].toFixed(1) + '</td>'
@@ -476,14 +477,16 @@ function renderStruct() {
                 + '<td>' + r[6].toFixed(1) + '%</td>'
                 + '<td>' + r[7].toFixed(1) + '%</td>'
                 + '<td class="' + chgClass(r[8]) + '">' + fmtChg(r[8]) + '</td>'
+                + '<td>' + r[9].toFixed(2) + '</td>'
+                + '<td>' + r[10].toFixed(1) + '%</td>'
                 + '</tr>';
         });
         tb.innerHTML = html;
     }
     const rc = build(a26c, a25c, cats);
     const rs = build(a26s, a25s, seas);
-    fill('structCat', rc.rows, rc.tg, rc.tu);
-    fill('structSea', rs.rows, rs.tg, rs.tu);
+    fill('structCat', rc.rows, rc.tg, rc.tu, rc.ts);
+    fill('structSea', rs.rows, rs.tg, rs.tu, rs.ts);
 }
 
 function init() {

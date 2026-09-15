@@ -156,7 +156,7 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 <button onclick="structQuick(30)">近30天</button>
 <button onclick="structQuick(60)">近60天</button>
 <button onclick="structQuick(0)">全期</button>
-<span style="color:#999">同比 = 25年同月日（25年数据覆盖7/1-9/6）</span>
+<span style="color:#999">同比 = 25年同月日（25年数据覆盖7/1-12/31）</span>
 </div>
 <div class="struct-wrap">
 <div class="struct-panel">
@@ -788,7 +788,7 @@ function render() {
     let pageRows = filtered.slice((curPage-1) * PAGE_SIZE, curPage * PAGE_SIZE);
     let html = '';
     for (let r of pageRows) {
-        html += '<tr data-spu="${r.spu}">';
+        html += '<tr data-spu="'+r.spu+'">';
         for (let c of visCols) {
             html += renderCell(r, c);
         }

@@ -133,6 +133,14 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 </head>
 <body>
 
+<!-- 首屏加载遮罩：数据文件较大，明确告知进度，避免被误判为「打不开」 -->
+<div id="bootMask" style="position:fixed;inset:0;background:#f0f2f5;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px">
+  <div style="width:38px;height:38px;border:3px solid #cbd5e1;border-top-color:#1f4e79;border-radius:50%;animation:jdspin 0.9s linear infinite"></div>
+  <div id="bootTxt" style="font-size:13px;color:#666">正在加载数据（约 20 秒，请稍候）…</div>
+  <div style="font-size:11px;color:#aaa">数据量较大，首次打开较慢；加载完成后浏览会很快</div>
+</div>
+<style>@keyframes jdspin{to{transform:rotate(360deg)}}</style>
+
 <div class="header">
 <h1>茵曼京东自营旗舰店 · 2026秋冬新品测款仪表盘</h1>
 <div class="sub">四维加权(加购率+转化率+UV价值+UV) | 仅「26秋在生产」· 已隐藏夏季款 | 品类内百分位排名 | 双击图片放大</div>
@@ -296,7 +304,7 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 <div class="tbl-wrap">
 <table id="mainTable">
 <thead><tr id="tableHead"></tr></thead>
-<tbody id="tableBody"><tr><td colspan="14" style="padding:30px;color:#888">正在加载数据...</td></tr></tbody>
+<tbody id="tableBody"><tr><td colspan="14" id="loadTip" style="padding:30px;color:#888">正在加载数据（首次约 15-30 秒，请稍候）…</td></tr></tbody>
 </table>
 </div>
 
@@ -316,7 +324,31 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 
 <div class="footer">茵曼京东自营旗舰店 2026秋冬测款 | 数据来源: 京东商智日粒度 + 京准通 | 点击表头排序 | 双击图片放大 | 单击行查看近15天趋势</div>
 
+<!-- 数据文件 -->
 <script src="zy_data.js"></script>
+<script>
+// ═══════ __DD 列式还原（与构建侧列式编码配套）═══════
+// 还原结果 [[mmdd,uv,gmv,件数,加购,买家,广告花费,广告GMV,点击,展现], ...]，
+// 数值为 Number、日期为 'MMDD' 字符串，与原始 JSON 结构完全一致 → 下游代码无需改动。
+var __DD = (function() {
+    var X = window.__DX; if (!X) return {};
+    var S = X.s, DY = X.d, F = X.f, N = F.length;
+    var C = [], k;
+    for (k = 0; k < N; k++) C.push(F[k].split(';'));
+    var dd = {}, n = S.length;
+    for (var i = 0; i < n; i++) {
+        var a = new Array(N);
+        for (k = 0; k < N; k++) a[k] = C[k][i].split(',');
+        var m = a[1].length, arr = new Array(m);
+        for (var j = 0; j < m; j++) {
+            arr[j] = [DY[parseInt(a[0][j], 36)], +a[1][j], +a[2][j], +a[3][j], +a[4][j],
+                      +a[5][j], +a[6][j], +a[7][j], +a[8][j], +a[9][j]];
+        }
+        dd[S[i]] = arr;
+    }
+    return dd;
+})();
+</script>
 <script>
 // ═══════ 全局配置 ═══════
 let sortColIdx = 7, sortDir = -1; // 默认UV降序（在可见列中的位置）
@@ -446,10 +478,10 @@ function renderStruct() {
     const a25s = structAgg(S.d25, y25from, y25to, seas);
     const mmFrom = from.slice(5).replace('-','/'), mmTo = to.slice(5).replace('-','/');
     const winTxt = '窗口 ' + mmFrom + '-' + mmTo;
-    const wc = document.getElementById('structWinCat'); if (wc) wc.textContent = winTxt + wcSuffix;
-    const ws = document.getElementById('structWinSea'); if (ws) ws.textContent = winTxt + wcSuffix;
     const has25 = !!S.d25 && Object.keys(S.d25).length > 0;   // 自营店无25年同期数据 → 同比列显示 —
     const wcSuffix = has25 ? ' · 26年 vs 25年同期' : ' · 26年（无25年同期数据）';
+    const wc = document.getElementById('structWinCat'); if (wc) wc.textContent = winTxt + wcSuffix;
+    const ws = document.getElementById('structWinSea'); if (ws) ws.textContent = winTxt + wcSuffix;
     function build(agg26, agg25, names) {
         let tg26 = 0, tu26 = 0, ts26 = 0, tg25 = 0, tu25 = 0;
         names.forEach(n => { tg26 += agg26[n][0]; tu26 += agg26[n][1]; ts26 += (agg26[n][2]||0); tg25 += agg25[n][0]; tu25 += agg25[n][1]; });
@@ -1224,10 +1256,11 @@ async function loadNotes() {
 }
 
 // 直接初始化（不再全量展开周数据，applyDateRange 按需聚合）
-if (typeof __M === 'undefined' || typeof __DD === 'undefined') {
-    document.getElementById('tableBody').innerHTML = '<tr><td colspan="14" style="color:red;padding:20px">数据加载失败 - 请刷新页面</td></tr>';
+if (typeof __M === 'undefined' || typeof __DD === 'undefined' || !Object.keys(__DD).length) {
+    document.getElementById('tableBody').innerHTML = '<tr><td colspan="14" style="color:red;padding:20px">数据加载失败（数据文件可能未完整加载）- 请强制刷新页面（Ctrl+F5）</td></tr>';
+    var _bm0 = document.getElementById('bootMask'); if (_bm0) _bm0.style.display = 'none';
 } else {
-    loadNotes().then(() => { init(); });
+    loadNotes().then(() => { init(); var _bm = document.getElementById('bootMask'); if (_bm) _bm.style.display = 'none'; });
 }
 </script>
 </body>

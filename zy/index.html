@@ -157,35 +157,35 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 <!-- 销售结构分析：类目 + 季节（占比与同比 · 支持时间筛选） -->
 <div class="struct-bar">
 <label>📅 时间窗口</label>
-<input type="date" id="structFrom" value="2026-07-01" min="2026-06-02" onchange="renderStruct()">
+<input type="date" id="structFrom" value="2026-07-01" min="2026-06-01" onchange="renderStruct()">
 <span>~</span>
-<input type="date" id="structTo" value="" min="2026-06-02" onchange="renderStruct()">
+<input type="date" id="structTo" value="" min="2026-06-01" onchange="renderStruct()">
 <button onclick="structQuick(7)">近7天</button>
 <button onclick="structQuick(30)">近30天</button>
 <button onclick="structQuick(60)">近60天</button>
 <button onclick="structQuick(0)">全期</button>
-<span style="color:#999">自营店暂无25年同期数据，同比列显示 —</span>
+<span style="color:#999">同比 = 25年同月日（25年数据覆盖6/1-12/31） · ⚠️ 秋促错位：25年秋促9/19-9/25、26年提前至9/14-9/21，9月按月对齐同比会失真，需拆分「日常 / 大促」两段看</span>
 </div>
 <div class="struct-wrap">
 <div class="struct-panel">
-<h3>📂 类目销售结构<span class="win" id="structWinCat">自营全店 · 26年</span></h3>
+<h3>📂 类目销售结构<span class="win" id="structWinCat">窗口 7/1-10/5 · 26年 vs 25年同期</span></h3>
 <table id="structCat">
 <thead><tr>
 <th>品类</th><th>销售额(万)</th><th>销售占比</th><th>25同期</th><th>变化</th><th>流量UV(万)</th><th>流量占比</th><th>25同期</th><th>变化</th><th>消耗(万)</th><th>消耗占比</th>
 </tr></thead>
 <tbody><tr><td colspan="11" style="text-align:center;color:#888">加载中...</td></tr></tbody>
 </table>
-<p class="struct-note">口径：店铺全店成交 · 销售占比=GMV占比，流量占比=UV占比 · 消耗=付费推广消耗金额（26年京准通数据） · 同比列因无25年同期数据留空（—），<span class="chg-up">红升</span><span class="chg-down">绿降</span></p>
+<p class="struct-note">口径：店铺全店成交 · 销售占比=GMV占比，流量占比=UV占比 · 消耗=付费推广消耗金额（26年京准通数据，25年无付费口径） · 变化=26年-25年（百分点），<span class="chg-up">红升</span><span class="chg-down">绿降</span></p>
 </div>
 <div class="struct-panel">
-<h3>🍂 季节销售结构<span class="win" id="structWinSea">自营全店 · 26年</span></h3>
+<h3>🍂 季节销售结构<span class="win" id="structWinSea">窗口 7/1-10/5 · 26年 vs 25年同期</span></h3>
 <table id="structSea">
 <thead><tr>
 <th>季节</th><th>销售额(万)</th><th>销售占比</th><th>25同期</th><th>变化</th><th>流量UV(万)</th><th>流量占比</th><th>25同期</th><th>变化</th><th>消耗(万)</th><th>消耗占比</th>
 </tr></thead>
 <tbody><tr><td colspan="11" style="text-align:center;color:#888">加载中...</td></tr></tbody>
 </table>
-<p class="struct-note">口径：店铺全店成交 · 季节=商品销售季节属性（按品牌标签表） · 消耗=付费推广消耗金额（26年京准通数据） · 同比列因无25年同期数据留空（—），<span class="chg-up">红升</span><span class="chg-down">绿降</span></p>
+<p class="struct-note">口径：店铺全店成交 · 季节=商品销售季节属性（按品牌标签表，25年款按26年标签反查） · 消耗=付费推广消耗金额（26年京准通数据，25年无付费口径），<span class="chg-up">红升</span><span class="chg-down">绿降</span></p>
 </div>
 </div>
 
@@ -478,7 +478,7 @@ function renderStruct() {
     const a25s = structAgg(S.d25, y25from, y25to, seas);
     const mmFrom = from.slice(5).replace('-','/'), mmTo = to.slice(5).replace('-','/');
     const winTxt = '窗口 ' + mmFrom + '-' + mmTo;
-    const has25 = !!S.d25 && Object.keys(S.d25).length > 0;   // 自营店无25年同期数据 → 同比列显示 —
+    const has25 = !!S.d25 && Object.keys(S.d25).length > 0;   // 有25年同期数据则显示同比列，否则显示 —
     const wcSuffix = has25 ? ' · 26年 vs 25年同期' : ' · 26年（无25年同期数据）';
     const wc = document.getElementById('structWinCat'); if (wc) wc.textContent = winTxt + wcSuffix;
     const ws = document.getElementById('structWinSea'); if (ws) ws.textContent = winTxt + wcSuffix;

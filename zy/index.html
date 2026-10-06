@@ -143,7 +143,7 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 
 <div class="header">
 <h1>茵曼京东自营旗舰店 · 2026秋冬新品测款仪表盘</h1>
-<div class="sub">四维加权(加购率+转化率+UV价值+UV) | 仅「26秋在生产」· 已隐藏夏季款 | 品类内百分位排名 | 双击图片放大</div>
+<div class="sub">四维加权(加购率+转化率+UV价值+UV) | 仅「26秋在生产」· 已隐藏夏季款 | <b>按款号汇总（同款多ID已合并为一行）</b> | 品类内百分位排名 | 双击图片放大</div>
 <div class="period" id="periodLabel">📅 近7天: 加载中...</div>
 </div>
 
@@ -322,7 +322,7 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 </div>
 </div>
 
-<div class="footer">茵曼京东自营旗舰店 2026秋冬测款 | 数据来源: 京东商智日粒度 + 京准通 | 点击表头排序 | 双击图片放大 | 单击行查看近15天趋势</div>
+<div class="footer">茵曼京东自营旗舰店 2026秋冬测款 | 数据来源: 京东商智日粒度 + 京准通 | 口径：同款多商品ID按<b>款号汇总</b>（指标为该款号下各ID之和；访客数只在单个ID内去重） | 点击表头排序 | 双击图片放大 | 单击行查看近15天趋势</div>
 
 <!-- 数据文件 -->
 <script src="zy_data.js"></script>
@@ -566,7 +566,8 @@ function applyDateRange() {
     
     document.getElementById('periodLabel').innerHTML = '&#128197; 自定义: '+from+' ~ '+to;
     
-    // === 日粒度精确聚合：对每个SPU累加[from, to]范围内的日数据 ===
+    // === 日粒度精确聚合：对每个「款号」累加[from,to]范围内的日数据 ===
+    // 注: __DD 的键已是「款号」（同款多个商品ID在数据侧已合并），变量名 spu 保留仅为兼容下游
     let aggBySpu = {};
     let rangeDays = 0;
     // 计算实际天数
@@ -582,7 +583,7 @@ function applyDateRange() {
         if (!a) continue;
         
         aggBySpu[spu] = {
-            spu, item: m[0], tag_cat: m[1], v5_cat: m[2], final_label: m[3],
+            spu, item: m[0], tag_cat: m[1], v5_cat: m[2], final_label: m[3], nspu: m[17]||1,
             img: m[4]||'', w_add_cart: m[5], w_cvr: m[6], w_uv_val: m[7], w_uv: m[8],
             th_green: m[9], th_red: m[10], th_uv_min: m[11], th_cart_min: m[12],
             notes: m[13]||'', sale_season: m[14]||'', sale_status: m[15]||'', exclusive_model: m[16]||'',
@@ -1032,7 +1033,8 @@ function fmtLocalDate(d) {
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 
-// __DD: {spu: [[mmdd, uv, gmv, sales, cart, buyers, ad_spend, ad_gmv, ad_clicks, ad_imp], ...]}
+// __DD: {款号: [[mmdd, uv, gmv, sales, cart, buyers, ad_spend, ad_gmv, ad_clicks, ad_imp], ...]}
+// （同款号下的多个商品ID已在数据侧合并；字段为该款号当日各ID之和）
 // mmdd格式: "0701" = 7月1日, "0620" = 6月20日（已按日期升序排序）
 // 二分查找：第一个 d[0] >= key 的下标（mmdd 字典序与日期序一致）
 function lowerBound(arr, key) {
@@ -1111,7 +1113,7 @@ function openTrend(spu) {
         + '<div class="t-info"><h2>'+item+'</h2>'
         + '<div class="t-meta">'
         + (badge ? '<span>'+badge+'</span>' : '')
-        + '<span>SPU: '+spu+'</span>'
+        + (r && r.nspu > 1 ? '<span>合并 '+r.nspu+' 个商品ID</span>' : '')
         + (cat ? '<span>'+cat+'</span>' : '')
         + (season ? '<span>'+season+'</span>' : '')
         + (status ? '<span>'+status+'</span>' : '')

@@ -36,6 +36,7 @@ body{font-family:'Microsoft YaHei',sans-serif;background:#f0f2f5;color:#333}
 .chg-up{color:#dc2626;font-weight:600}
 .chg-down{color:#16a34a;font-weight:600}
 .chg-flat{color:#9ca3af}
+.chg-new{color:#3E9E99;font-weight:600}
 .struct-note{font-size:10px;color:#888;padding:6px 14px 8px;margin:0}
 @media (max-width:768px){
 .struct-wrap{flex-direction:column;padding:0 10px 12px}
@@ -163,21 +164,21 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 <h3>📂 类目销售结构<span class="win" id="structWinCat">窗口 7/1-9/6 · 26年 vs 25年同期</span></h3>
 <table id="structCat">
 <thead><tr>
-<th>品类</th><th>销售额(万)</th><th>销售占比</th><th>25同期</th><th>变化</th><th>流量UV(万)</th><th>流量占比</th><th>25同期</th><th>变化</th><th>消耗(万)</th><th>消耗占比</th>
+<th>品类</th><th>销售额(万)</th><th>销售占比</th><th>25同期</th><th>销售额同比</th><th>流量UV(万)</th><th>流量占比</th><th>25同期</th><th>流量同比</th><th>消耗(万)</th><th>消耗占比</th>
 </tr></thead>
 <tbody><tr><td colspan="11" style="text-align:center;color:#888">加载中...</td></tr></tbody>
 </table>
-<p class="struct-note">口径：店铺全店成交 · 销售占比=GMV占比，流量占比=UV占比 · 消耗=付费推广消耗金额（26年付费数据，25年无付费口径） · 变化=26年-25年（百分点），<span class="chg-up">红升</span><span class="chg-down">绿降</span></p>
+<p class="struct-note">口径：店铺全店成交 · 销售占比=GMV占比，流量占比=UV占比 · 消耗=付费推广消耗金额（26年付费数据，25年无付费口径） · 销售额同比/流量同比=(26年-25年同期)/25年同期，<span class="chg-up">红升</span><span class="chg-down">绿降</span>；25年同期为0则标「新增」</p>
 </div>
 <div class="struct-panel">
 <h3>🍂 季节销售结构<span class="win" id="structWinSea">窗口 7/1-9/6 · 26年 vs 25年同期</span></h3>
 <table id="structSea">
 <thead><tr>
-<th>季节</th><th>销售额(万)</th><th>销售占比</th><th>25同期</th><th>变化</th><th>流量UV(万)</th><th>流量占比</th><th>25同期</th><th>变化</th><th>消耗(万)</th><th>消耗占比</th>
+<th>季节</th><th>销售额(万)</th><th>销售占比</th><th>25同期</th><th>销售额同比</th><th>流量UV(万)</th><th>流量占比</th><th>25同期</th><th>流量同比</th><th>消耗(万)</th><th>消耗占比</th>
 </tr></thead>
 <tbody><tr><td colspan="11" style="text-align:center;color:#888">加载中...</td></tr></tbody>
 </table>
-<p class="struct-note">口径：店铺全店成交 · 季节=商品销售季节属性，25年款按26年标签反查（匹配率99.8%） · 消耗=付费推广消耗金额（26年付费数据，25年无付费口径），<span class="chg-up">红升</span><span class="chg-down">绿降</span></p>
+<p class="struct-note">口径：店铺全店成交 · 季节=商品销售季节属性，25年款按26年标签反查（匹配率99.8%） · 消耗=付费推广消耗金额（26年付费数据，25年无付费口径） · 销售额同比/流量同比=(26年-25年同期)/25年同期，<span class="chg-up">红升</span><span class="chg-down">绿降</span>；25年同期为0则标「新增」</p>
 </div>
 </div>
 
@@ -395,8 +396,10 @@ function buildHeader() {
 
 // ═══════ 初始化 ═══════
 // ── 销售结构表渲染（类目/季节 · 占比与同比 · 时间筛选） ──
-function chgClass(v) { return v > 0.05 ? 'chg-up' : (v < -0.05 ? 'chg-down' : 'chg-flat'); }
-function fmtChg(v) { return (v > 0 ? '+' : '') + v.toFixed(1) + 'pp'; }
+function yoyClass(v) { return v > 0.5 ? 'chg-up' : (v < -0.5 ? 'chg-down' : 'chg-flat'); }
+function fmtYoy(v) { return (v > 0 ? '+' : '') + v.toFixed(1) + '%'; }
+function yoyOf(v26, v25) { return (v25 > 0) ? (v26 - v25) / v25 * 100 : (v26 > 0 ? 'NEW' : null); }
+function yoyCell(x) { return (x === null) ? '<td class="chg-flat">&mdash;</td>' : (x === 'NEW' ? '<td class="chg-new">新增</td>' : '<td class="' + yoyClass(x) + '">' + fmtYoy(x) + '</td>'); }
 function structAgg(daily, from, to, names) {
     // 聚合窗口内数据
     const agg = {};
@@ -446,8 +449,10 @@ function renderStruct() {
     const a25s = structAgg(S.d25, y25from, y25to, seas);
     const mmFrom = from.slice(5).replace('-','/'), mmTo = to.slice(5).replace('-','/');
     const winTxt = '窗口 ' + mmFrom + '-' + mmTo;
-    const wc = document.getElementById('structWinCat'); if (wc) wc.textContent = winTxt + ' · 26年 vs 25年同期';
-    const ws = document.getElementById('structWinSea'); if (ws) ws.textContent = winTxt + ' · 26年 vs 25年同期';
+    const has25 = !!S.d25 && Object.keys(S.d25).length > 0;
+    const wcSuffix = has25 ? ' · 26年 vs 25年同期' : ' · 26年（无25年同期数据）';
+    const wc = document.getElementById('structWinCat'); if (wc) wc.textContent = winTxt + wcSuffix;
+    const ws = document.getElementById('structWinSea'); if (ws) ws.textContent = winTxt + wcSuffix;
     function build(agg26, agg25, names) {
         let tg26 = 0, tu26 = 0, ts26 = 0, tg25 = 0, tu25 = 0;
         names.forEach(n => { tg26 += agg26[n][0]; tu26 += agg26[n][1]; ts26 += (agg26[n][2]||0); tg25 += agg25[n][0]; tu25 += agg25[n][1]; });
@@ -457,26 +462,30 @@ function renderStruct() {
                 const p26g = tg26 ? g26/tg26*100 : 0, p25g = tg25 ? g25/tg25*100 : 0;
                 const p26u = tu26 ? u26/tu26*100 : 0, p25u = tu25 ? u25/tu25*100 : 0;
                 const p26s = ts26 ? s26/ts26*100 : 0;
-                return [n, g26/10000, p26g, p25g, p26g-p25g, u26/10000, p26u, p25u, p26u-p25u, s26/10000, p26s];
+                return [n, g26/10000, p26g, has25?p25g:null, has25?yoyOf(g26,g25):null, u26/10000, p26u, has25?p25u:null, has25?yoyOf(u26,u25):null, s26/10000, p26s];
             });
         rows.sort((a,b) => b[1] - a[1]);
-        return {rows: rows, tg: tg26/10000, tu: tu26/10000, ts: ts26/10000};
+        return {rows: rows, tg: tg26/10000, tu: tu26/10000, ts: ts26/10000, tg25: tg25/10000, tu25: tu25/10000};
     }
-    function fill(tid, rows, tg, tu, ts) {
+    function fill(tid, rows, tg, tu, ts, tg25, tu25) {
         const tb = document.getElementById(tid).getElementsByTagName('tbody')[0];
         if (!tb) return;
         let html = '';
-        html += '<tr class="total"><td>合计</td><td>' + tg.toFixed(1) + '</td><td>100%</td><td>100%</td><td>—</td><td>' + tu.toFixed(1) + '</td><td>100%</td><td>100%</td><td>—</td><td>' + ts.toFixed(2) + '</td><td>100%</td></tr>';
+        html += '<tr class="total"><td>合计</td><td>' + tg.toFixed(1) + '</td><td>100%</td>'
+              + (has25 ? '<td>100%</td>' + yoyCell(yoyOf(tg, tg25)) : '<td>—</td><td>—</td>')
+              + '<td>' + tu.toFixed(1) + '</td><td>100%</td>'
+              + (has25 ? '<td>100%</td>' + yoyCell(yoyOf(tu, tu25)) : '<td>—</td><td>—</td>')
+              + '<td>' + ts.toFixed(2) + '</td><td>100%</td></tr>';
         rows.forEach(r => {
             html += '<tr><td>' + r[0] + '</td>'
                 + '<td>' + r[1].toFixed(1) + '</td>'
                 + '<td>' + r[2].toFixed(1) + '%</td>'
-                + '<td>' + r[3].toFixed(1) + '%</td>'
-                + '<td class="' + chgClass(r[4]) + '">' + fmtChg(r[4]) + '</td>'
+                + '<td>' + (r[3] === null ? '—' : r[3].toFixed(1) + '%') + '</td>'
+                + yoyCell(r[4])
                 + '<td>' + r[5].toFixed(1) + '</td>'
                 + '<td>' + r[6].toFixed(1) + '%</td>'
-                + '<td>' + r[7].toFixed(1) + '%</td>'
-                + '<td class="' + chgClass(r[8]) + '">' + fmtChg(r[8]) + '</td>'
+                + '<td>' + (r[7] === null ? '—' : r[7].toFixed(1) + '%') + '</td>'
+                + yoyCell(r[8])
                 + '<td>' + r[9].toFixed(2) + '</td>'
                 + '<td>' + r[10].toFixed(1) + '%</td>'
                 + '</tr>';
@@ -485,8 +494,8 @@ function renderStruct() {
     }
     const rc = build(a26c, a25c, cats);
     const rs = build(a26s, a25s, seas);
-    fill('structCat', rc.rows, rc.tg, rc.tu, rc.ts);
-    fill('structSea', rs.rows, rs.tg, rs.tu, rs.ts);
+    fill('structCat', rc.rows, rc.tg, rc.tu, rc.ts, rc.tg25, rc.tu25);
+    fill('structSea', rs.rows, rs.tg, rs.tu, rs.ts, rs.tg25, rs.tu25);
 }
 
 function init() {

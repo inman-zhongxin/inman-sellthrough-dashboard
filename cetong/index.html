@@ -70,10 +70,18 @@ tr:hover{background:#f8fafd}
 .tier-pill.t2{background:#ddd6fe;color:#5b21b6}
 .tier-pill.t3{background:#f3e8ff;color:#7e22ce;border:1px solid #e9d5ff}
 .tier-note{display:inline-block;margin-left:3px;font-size:10px;color:#6b7280;white-space:nowrap}
-.tier-ms{display:inline-flex;gap:4px;align-items:center;flex-wrap:wrap;max-width:560px}
-.tier-ms .tms{padding:3px 9px;border:1px solid #cbd5e1;border-radius:999px;font-size:11px;color:#475569;background:#fff;cursor:pointer;user-select:none;white-space:nowrap;transition:all .15s}
-.tier-ms .tms:hover{border-color:#7c3aed;color:#7c3aed}
-.tier-ms .tms.on{background:#7c3aed;border-color:#7c3aed;color:#fff;font-weight:600}
+.msel{position:relative;display:inline-block}
+.msel-btn{padding:5px 8px;border:1px solid #d1d5db;border-radius:5px;font-size:11px;background:#fff;color:#111;cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-width:86px;max-width:200px;user-select:none}
+.msel-btn:hover{border-color:#9ca3af}
+.msel-btn .msel-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.msel-btn .msel-arrow{font-size:8px;color:#888;margin-left:auto;flex:none}
+.msel.open .msel-btn{border-color:#1f4e79;box-shadow:0 0 0 2px rgba(31,78,121,.12)}
+.msel-panel{display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:320;background:#fff;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 6px 16px rgba(0,0,0,.12);padding:3px 0;min-width:140px}
+.msel.open .msel-panel{display:block}
+.msel-item{display:flex;align-items:center;gap:6px;padding:5px 10px;font-size:11px;color:#333;cursor:pointer;white-space:nowrap}
+.msel-item:hover{background:#f3f4f6}
+.msel-item:first-child{border-bottom:1px solid #f1f5f9;margin-bottom:2px}
+.msel-item input[type=checkbox]{width:12px;height:12px;padding:0;margin:0;border-radius:2px;accent-color:#1f4e79;cursor:pointer;flex:none}
 
 .score-bar{display:inline-block;height:14px;border-radius:3px;vertical-align:middle;margin-right:3px}
 
@@ -276,10 +284,13 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 </select>
 
 <label>主推梯队:</label>
-<div class="tier-ms" id="filterTier">
-<span class="tms on" data-t="" onclick="toggleTier(this)" title="清空梯队筛选">全部</span>
-<span class="tms" data-t="TOP1-5" onclick="toggleTier(this)">TOP1-5</span><span class="tms" data-t="TOP6-10" onclick="toggleTier(this)">TOP6-10</span><span class="tms" data-t="TOP11-20" onclick="toggleTier(this)">TOP11-20</span>
-<span class="tms" data-t="__none__" onclick="toggleTier(this)">未入梯队</span>
+<div class="msel" id="filterTierBox">
+<div class="msel-btn" onclick="tierOpen(event)" title="点击展开，可多选梯队档位"><span class="msel-txt" id="tierBtnText">全部</span><span class="msel-arrow">▾</span></div>
+<div class="msel-panel">
+<div class="msel-item" data-v="" onclick="tierPick('')"><input type="checkbox" checked> 全部</div>
+<div class="msel-item" data-v="TOP1-5" onclick="tierPick(this.dataset.v)"><input type="checkbox"> TOP1-5</div><div class="msel-item" data-v="TOP6-10" onclick="tierPick(this.dataset.v)"><input type="checkbox"> TOP6-10</div><div class="msel-item" data-v="TOP11-20" onclick="tierPick(this.dataset.v)"><input type="checkbox"> TOP11-20</div>
+<div class="msel-item" data-v="__none__" onclick="tierPick(this.dataset.v)"><input type="checkbox"> 未入梯队</div>
+</div>
 </div>
 
 <label>季节:</label>
@@ -733,23 +744,47 @@ function closeModal() {
     document.getElementById('imgModal').classList.remove('show');
 }
 
-// 主推梯队多选筛选（空选＝全部；可同时勾选 TOP1-5 + TOP6-10 等）
+// 主推梯队筛选（下拉式多选；空选＝全部；可同时勾选 TOP1-5 + TOP6-10 等）
 let tierSel = [];
-function toggleTier(el) {
-    let v = el.getAttribute('data-t') || '';
+function tierOpen(ev) {
+    if (ev) ev.stopPropagation();
+    let box = document.getElementById('filterTierBox');
+    if (box) box.classList.toggle('open');
+}
+function tierPick(v) {
+    v = String(v == null ? '' : v);
     if (v === '') { tierSel = []; }
     else {
         let i = tierSel.indexOf(v);
         if (i >= 0) tierSel.splice(i, 1); else tierSel.push(v);
     }
-    let pills = document.querySelectorAll('#filterTier .tms');
-    for (let k = 0; k < pills.length; k++) {
-        let pv = pills[k].getAttribute('data-t') || '';
-        let on = (pv === '') ? (tierSel.length === 0) : (tierSel.indexOf(pv) >= 0);
-        if (on) pills[k].classList.add('on'); else pills[k].classList.remove('on');
-    }
+    tierSync();
     render();
 }
+function tierSync() {
+    let box = document.getElementById('filterTierBox');
+    if (!box) return;
+    let txt = document.getElementById('tierBtnText');
+    if (txt) {
+        if (tierSel.length === 0) txt.textContent = '全部';
+        else if (tierSel.length === 1) txt.textContent = (tierSel[0] === '__none__' ? '未入梯队' : tierSel[0]);
+        else if (tierSel.length === 2) txt.textContent = tierSel.map(function(v) { return v === '__none__' ? '未入梯队' : v; }).join(' + ');
+        else txt.textContent = '已选 ' + tierSel.length + ' 档';
+    }
+    let items = box.querySelectorAll('.msel-item');
+    for (let k = 0; k < items.length; k++) {
+        let v = items[k].getAttribute('data-v') || '';
+        let on = (v === '') ? (tierSel.length === 0) : (tierSel.indexOf(v) >= 0);
+        let ck = items[k].querySelector('input');
+        if (ck) ck.checked = on;
+    }
+}
+document.addEventListener('click', function(ev) {
+    let box = document.getElementById('filterTierBox');
+    if (box && box.classList.contains('open') && ev.target && ev.target.closest && !ev.target.closest('#filterTierBox')) {
+        box.classList.remove('open');
+    }
+});
 function getFilteredData() {
     let cat = document.getElementById('filterCat').value;
     let label = document.getElementById('filterLabel').value;

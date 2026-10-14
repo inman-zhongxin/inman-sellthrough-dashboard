@@ -64,6 +64,12 @@ tr:hover{background:#f8fafd}
 .yellow{background:#fef9c3;color:#ca8a04}
 .red{background:#fee2e2;color:#dc2626}
 
+/* 主推梯队 pill */
+.tier-pill{display:inline-block;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:600;white-space:nowrap}
+.tier-pill.t1{background:#7c3aed;color:#fff}
+.tier-pill.t2{background:#ddd6fe;color:#5b21b6}
+.tier-pill.t3{background:#f3e8ff;color:#7e22ce;border:1px solid #e9d5ff}
+
 .score-bar{display:inline-block;height:14px;border-radius:3px;vertical-align:middle;margin-right:3px}
 
 .wow-up{color:#16a34a}
@@ -272,6 +278,13 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 <option value="">全部</option><option value="绿灯">🟢 绿灯</option><option value="黄灯">🟡 黄灯</option><option value="红灯">🔴 红灯</option>
 </select>
 
+<label>主推梯队:</label>
+<select id="filterTier" onchange="render()">
+<option value="">全部</option>
+<option value="TOP1-5">TOP1-5</option><option value="TOP6-10">TOP6-10</option><option value="TOP11-20">TOP11-20</option>
+<option value="__none__">未入梯队</option>
+</select>
+
 <label>季节:</label>
 <select id="filterSeason" onchange="render()">
 <option value="">全部</option><option value="春季">春季</option><option value="秋季">秋季</option><option value="冬季">冬季</option><option value="全季">全季</option>
@@ -361,7 +374,7 @@ var __DD = (function() {
 </script>
 <script>
 // ═══════ 全局配置 ═══════
-let sortColIdx = 7, sortDir = -1; // 默认UV降序（在可见列中的位置）
+let sortColIdx = 8, sortDir = -1; // 默认排序位（主推梯队列插入后 +1，维持原「日均环比」降序）
 let currentWeek = ALL_WEEKS[ALL_WEEKS.length-1];
 let currentData = [];
 
@@ -373,6 +386,7 @@ const COLS = [
     {id:'final_label', label:'标签', type:'text', vis:false},
     {id:'score', label:'综合分', type:'score', vis:true, core:true},
     {id:'decision', label:'决策', type:'badge', vis:true},
+    {id:'tier', label:'主推梯队', type:'tier', vis:true, width:'76px'},
     {id:'uv', label:'UV', type:'metric', prev:'prev_uv', fmt:'uv', vis:true, core:true},
     {id:'uv_wow', label:'UV环比', type:'wow', vis:false},
     {id:'avg_daily_uv', label:'日均访客', type:'metric', prev:'prev_avg_uv', fmt:'uv', vis:true},
@@ -604,7 +618,7 @@ function applyDateRange() {
             ad_spend: Math.round(a.as * 100) / 100,
             ad_impressions: a.ai, ad_clicks: a.ac,
             ad_gmv: Math.round(a.ag * 100) / 100,
-            ad_orders: 0, ad_cart: 0, score: 0, rank: 0, decision: '',
+            ad_orders: 0, ad_cart: 0, score: 0, rank: 0, decision: '', tier: '', tier_rank: 0,
         };
         
         let r = aggBySpu[spu];
@@ -619,6 +633,14 @@ function applyDateRange() {
     }
     
     currentData = Object.values(aggBySpu);
+    
+    // 主推梯队挂载（按款号匹配 __TIER；未命中保持默认 ''/0）
+    if (typeof __TIER !== 'undefined') {
+        for (let r of currentData) {
+            let t = __TIER[r.item];
+            if (t) { r.tier = t; r.tier_rank = ((typeof __TIER_RANK !== 'undefined') && __TIER_RANK[t]) || 0; }
+        }
+    }
     
     // === 环比：对比等长前序时段（同样用日粒度精确聚合） ===
     let prevFrom = new Date(fd.getTime() - (rangeDays) * 86400000);
@@ -750,6 +772,7 @@ function getFilteredData() {
     let season = document.getElementById('filterSeason').value;
     let status = document.getElementById('filterStatus').value;
     let exclusive = document.getElementById('filterExclusive').value;
+    let tierF = document.getElementById('filterTier').value;
     let minScore = parseInt(document.getElementById('filterMinScore').value) || 0;
     let search = document.getElementById('filterSearch').value.toLowerCase();
     
@@ -760,6 +783,7 @@ function getFilteredData() {
     if (season) filtered = filtered.filter(r => r.sale_season && r.sale_season === season);
     if (status) filtered = filtered.filter(r => r.sale_status && r.sale_status === status);
     if (exclusive) filtered = filtered.filter(r => r.exclusive_model && r.exclusive_model === exclusive);
+    if (tierF) filtered = filtered.filter(r => tierF === '__none__' ? !r.tier : r.tier === tierF);
     if (minScore > 0) filtered = filtered.filter(r => r.score >= minScore);
     if (search) filtered = filtered.filter(r => r.item.toLowerCase().includes(search));
     return filtered;
@@ -778,7 +802,7 @@ function onSearchInput() {
 }
 
 function getFilterSig() {
-    return ['filterCat','filterLabel','filterDecision','filterSeason','filterStatus','filterExclusive','filterMinScore','filterSearch']
+    return ['filterCat','filterLabel','filterDecision','filterTier','filterSeason','filterStatus','filterExclusive','filterMinScore','filterSearch']
         .map(id => document.getElementById(id).value).join('|');
 }
 
@@ -818,7 +842,7 @@ function render() {
     let visCols = getVisCols();
     if (sortColIdx >= 0 && sortColIdx < visCols.length) {
         let colDef = visCols[sortColIdx];
-        let sk = colDef.id;
+        let sk = (colDef.id === 'tier') ? 'tier_rank' : colDef.id;   // 主推梯队列按权重数字排序
         filtered.sort((a,b) => {
             let va = a[sk], vb = b[sk];
             if (va === null || va === undefined) va = (colDef.type === 'wow') ? -999 : '';
@@ -872,6 +896,12 @@ function renderCell(r, col) {
             return '<td'+paidClass+'>'+getScoreBar(r.score)+'<b>'+r.score+'</b></td>';
         case 'badge':
             return '<td'+paidClass+'>'+getBadge(r.decision)+'</td>';
+        case 'tier': {
+            let t = r.tier || '';
+            if (!t) return '<td'+paidClass+'><span style="color:#ccc">—</span></td>';
+            let lv = (r.tier_rank >= 3) ? 't1' : (r.tier_rank === 2 ? 't2' : 't3');
+            return '<td'+paidClass+'><span class="tier-pill '+lv+'">'+t+'</span></td>';
+        }
         case 'metric':
             return '<td'+paidClass+'>'+formatMetric(r, col)+'</td>';
         case 'wow':

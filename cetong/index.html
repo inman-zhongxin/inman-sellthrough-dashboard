@@ -69,6 +69,11 @@ tr:hover{background:#f8fafd}
 .tier-pill.t1{background:#7c3aed;color:#fff}
 .tier-pill.t2{background:#ddd6fe;color:#5b21b6}
 .tier-pill.t3{background:#f3e8ff;color:#7e22ce;border:1px solid #e9d5ff}
+.tier-note{display:inline-block;margin-left:3px;font-size:10px;color:#6b7280;white-space:nowrap}
+.tier-ms{display:inline-flex;gap:4px;align-items:center;flex-wrap:wrap;max-width:560px}
+.tier-ms .tms{padding:3px 9px;border:1px solid #cbd5e1;border-radius:999px;font-size:11px;color:#475569;background:#fff;cursor:pointer;user-select:none;white-space:nowrap;transition:all .15s}
+.tier-ms .tms:hover{border-color:#7c3aed;color:#7c3aed}
+.tier-ms .tms.on{background:#7c3aed;border-color:#7c3aed;color:#fff;font-weight:600}
 
 .score-bar{display:inline-block;height:14px;border-radius:3px;vertical-align:middle;margin-right:3px}
 
@@ -271,11 +276,11 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 </select>
 
 <label>主推梯队:</label>
-<select id="filterTier" onchange="render()">
-<option value="">全部</option>
-<option value="TOP1-5">TOP1-5</option><option value="TOP6-10">TOP6-10</option><option value="TOP11-20">TOP11-20</option>
-<option value="__none__">未入梯队</option>
-</select>
+<div class="tier-ms" id="filterTier">
+<span class="tms on" data-t="" onclick="toggleTier(this)" title="清空梯队筛选">全部</span>
+<span class="tms" data-t="TOP1-5" onclick="toggleTier(this)">TOP1-5</span><span class="tms" data-t="TOP6-10" onclick="toggleTier(this)">TOP6-10</span><span class="tms" data-t="TOP11-20" onclick="toggleTier(this)">TOP11-20</span>
+<span class="tms" data-t="__none__" onclick="toggleTier(this)">未入梯队</span>
+</div>
 
 <label>季节:</label>
 <select id="filterSeason" onchange="render()">
@@ -354,7 +359,7 @@ const COLS = [
     {id:'final_label', label:'标签', type:'text', vis:false},
     {id:'score', label:'综合分', type:'score', vis:true, core:true},
     {id:'decision', label:'决策', type:'badge', vis:true},
-    {id:'tier', label:'主推梯队', type:'tier', vis:true, width:'76px'},
+    {id:'tier', label:'主推梯队', type:'tier', vis:true, width:'112px'},
     {id:'uv', label:'UV', type:'metric', prev:'prev_uv', fmt:'uv', vis:true, core:true},
     {id:'uv_wow', label:'UV环比', type:'wow', vis:false},
     {id:'avg_daily_uv', label:'日均访客', type:'metric', prev:'prev_avg_uv', fmt:'uv', vis:true},
@@ -581,7 +586,7 @@ function applyDateRange() {
             ad_spend: Math.round(a.as * 100) / 100,
             ad_impressions: a.ai, ad_clicks: a.ac,
             ad_gmv: Math.round(a.ag * 100) / 100,
-            ad_orders: 0, ad_cart: 0, score: 0, rank: 0, decision: '', tier: '', tier_rank: 0,
+            ad_orders: 0, ad_cart: 0, score: 0, rank: 0, decision: '', tier: '', tier_rank: 0, tier_note: '',
         };
         
         let r = aggBySpu[spu];
@@ -601,7 +606,7 @@ function applyDateRange() {
     if (typeof __TIER !== 'undefined') {
         for (let r of currentData) {
             let t = __TIER[r.item];
-            if (t) { r.tier = t; r.tier_rank = ((typeof __TIER_RANK !== 'undefined') && __TIER_RANK[t]) || 0; }
+            if (t) { r.tier = t; r.tier_rank = ((typeof __TIER_RANK !== 'undefined') && __TIER_RANK[t]) || 0; r.tier_note = ((typeof __TIER_NOTE !== 'undefined') && __TIER_NOTE[r.item]) || ''; }
         }
     }
     
@@ -728,6 +733,23 @@ function closeModal() {
     document.getElementById('imgModal').classList.remove('show');
 }
 
+// 主推梯队多选筛选（空选＝全部；可同时勾选 TOP1-5 + TOP6-10 等）
+let tierSel = [];
+function toggleTier(el) {
+    let v = el.getAttribute('data-t') || '';
+    if (v === '') { tierSel = []; }
+    else {
+        let i = tierSel.indexOf(v);
+        if (i >= 0) tierSel.splice(i, 1); else tierSel.push(v);
+    }
+    let pills = document.querySelectorAll('#filterTier .tms');
+    for (let k = 0; k < pills.length; k++) {
+        let pv = pills[k].getAttribute('data-t') || '';
+        let on = (pv === '') ? (tierSel.length === 0) : (tierSel.indexOf(pv) >= 0);
+        if (on) pills[k].classList.add('on'); else pills[k].classList.remove('on');
+    }
+    render();
+}
 function getFilteredData() {
     let cat = document.getElementById('filterCat').value;
     let label = document.getElementById('filterLabel').value;
@@ -735,7 +757,6 @@ function getFilteredData() {
     let season = document.getElementById('filterSeason').value;
     let status = document.getElementById('filterStatus').value;
     let exclusive = document.getElementById('filterExclusive').value;
-    let tierF = document.getElementById('filterTier').value;
     let minScore = parseInt(document.getElementById('filterMinScore').value) || 0;
     let search = document.getElementById('filterSearch').value.toLowerCase();
     
@@ -746,7 +767,7 @@ function getFilteredData() {
     if (season) filtered = filtered.filter(r => r.sale_season && r.sale_season === season);
     if (status) filtered = filtered.filter(r => r.sale_status && r.sale_status === status);
     if (exclusive) filtered = filtered.filter(r => r.exclusive_model && r.exclusive_model === exclusive);
-    if (tierF) filtered = filtered.filter(r => tierF === '__none__' ? !r.tier : r.tier === tierF);
+    if (tierSel.length) filtered = filtered.filter(r => tierSel.indexOf(r.tier || '__none__') >= 0);
     if (minScore > 0) filtered = filtered.filter(r => r.score >= minScore);
     if (search) filtered = filtered.filter(r => r.item.toLowerCase().includes(search));
     return filtered;
@@ -765,8 +786,8 @@ function onSearchInput() {
 }
 
 function getFilterSig() {
-    return ['filterCat','filterLabel','filterDecision','filterTier','filterSeason','filterStatus','filterExclusive','filterMinScore','filterSearch']
-        .map(id => document.getElementById(id).value).join('|');
+    return ['filterCat','filterLabel','filterDecision','filterSeason','filterStatus','filterExclusive','filterMinScore','filterSearch']
+        .map(id => document.getElementById(id).value).join('|') + '|T:' + tierSel.slice().sort().join(',');
 }
 
 function goPage(n) {
@@ -863,7 +884,8 @@ function renderCell(r, col) {
             let t = r.tier || '';
             if (!t) return '<td'+paidClass+'><span style="color:#ccc">—</span></td>';
             let lv = (r.tier_rank >= 3) ? 't1' : (r.tier_rank === 2 ? 't2' : 't3');
-            return '<td'+paidClass+'><span class="tier-pill '+lv+'">'+t+'</span></td>';
+            let nt = r.tier_note ? '<span class="tier-note">'+r.tier_note+'</span>' : '';
+            return '<td'+paidClass+'><span class="tier-pill '+lv+'">'+t+'</span>'+nt+'</td>';
         }
         case 'metric':
             return '<td'+paidClass+'>'+formatMetric(r, col)+'</td>';
@@ -957,6 +979,7 @@ function exportExcel() {
                 case 'text': case 'notes': v = (r[c.id] || '').toString(); break;
                 case 'score': v = r.score; break;
                 case 'badge': v = r.decision; break;
+                case 'tier': v = (r.tier || '') + (r.tier_note || ''); break;
                 case 'metric':
                     v = r[c.id];
                     if (v === null || v === undefined) v = '';

@@ -65,10 +65,13 @@ tr:hover{background:#f8fafd}
 .red{background:#fee2e2;color:#dc2626}
 
 /* 主推梯队 pill */
-.tier-pill{display:inline-block;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:600;white-space:nowrap}
+.tier-pill{display:inline-block;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:600;white-space:nowrap;cursor:pointer;transition:transform .08s,box-shadow .08s}
+.tier-pill:hover{transform:translateY(-1px);box-shadow:0 1px 4px rgba(0,0,0,.20)}
 .tier-pill.t1{background:#7c3aed;color:#fff}
 .tier-pill.t2{background:#ddd6fe;color:#5b21b6}
 .tier-pill.t3{background:#f3e8ff;color:#7e22ce;border:1px solid #e9d5ff}
+.tier-pill.tn{background:#f4f6f7;color:#9aa3ad;border:1px dashed #d9dfe4;font-weight:500}
+.tier-pill.on{outline:2px solid #1f4e79;outline-offset:1px}
 .tier-note{display:inline-block;margin-left:3px;font-size:10px;color:#6b7280;white-space:nowrap}
 .msel{position:relative;display:inline-block}
 .msel-btn{padding:5px 8px;border:1px solid #d1d5db;border-radius:5px;font-size:11px;background:#fff;color:#111;cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-width:86px;max-width:200px;user-select:none}
@@ -798,6 +801,19 @@ function tierPick(v) {
     tierSync();
     render();
 }
+// 点「主推梯队」单元格 → 单选该档；再点同一档 = 取消回全部（2026-10-19）
+function tierQuick(ev) {
+    if (ev && ev.stopPropagation) ev.stopPropagation();
+    let el = (ev && (ev.currentTarget || ev.target)) || null;
+    let v = (el && el.getAttribute) ? (el.getAttribute('data-tv') || '') : '';
+    if (!v) v = '__none__';
+    if (tierSel.length === 1 && tierSel[0] === v) { tierSel = []; }
+    else { tierSel = [v]; }
+    tierSync();
+    render();
+    let wrap = document.querySelector('.tbl-wrap');
+    if (wrap) wrap.scrollTop = 0;
+}
 function tierSync() {
     let box = document.getElementById('filterTierBox');
     if (!box) return;
@@ -953,11 +969,14 @@ function renderCell(r, col) {
         case 'badge':
             return '<td'+paidClass+'>'+getBadge(r.decision)+'</td>';
         case 'tier': {
+            // 单元格即筛选入口（2026-10-19）：点 pills 只看该档，再点一次取消
             let t = r.tier || '';
-            if (!t) return '<td'+paidClass+'><span style="color:#ccc">—</span></td>';
-            let lv = (r.tier_rank >= 3) ? 't1' : (r.tier_rank === 2 ? 't2' : 't3');
+            let tv = (t || '__none__');
+            let txt = t || '未入梯队';
+            let lv = t ? ((r.tier_rank >= 3) ? 't1' : (r.tier_rank === 2 ? 't2' : 't3')) : 'tn';
+            if (tierSel.indexOf(tv) >= 0) lv += ' on';
             let nt = r.tier_note ? '<span class="tier-note">'+r.tier_note+'</span>' : '';
-            return '<td'+paidClass+'><span class="tier-pill '+lv+'">'+t+'</span>'+nt+'</td>';
+            return '<td'+paidClass+'><span class="tier-pill '+lv+'" data-tv="'+tv+'" onclick="tierQuick(event)" title="点击只看「'+txt+'」，再点一次取消">'+txt+'</span>'+nt+'</td>';
         }
         case 'metric':
             return '<td'+paidClass+'>'+formatMetric(r, col)+'</td>';

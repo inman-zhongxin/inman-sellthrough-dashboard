@@ -368,6 +368,8 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 
 <!-- 数据文件 -->
 <script src="zy_data.js"></script>
+<script>window.__TIER_CFG={store:'ZY',path:'zy/tier_data.js',repo:'inman-zhongxin/inman-sellthrough-dashboard'};</script>
+<script src="tier_data.js"></script>
 <script>
 // ═══════ __DD 列式还原（与构建侧列式编码配套）═══════
 // 还原结果 [[mmdd,uv,gmv,件数,加购,买家,广告花费,广告GMV,点击,展现], ...]，
@@ -976,7 +978,8 @@ function renderCell(r, col) {
             let lv = t ? ((r.tier_rank >= 3) ? 't1' : (r.tier_rank === 2 ? 't2' : 't3')) : 'tn';
             if (tierSel.indexOf(tv) >= 0) lv += ' on';
             let nt = r.tier_note ? '<span class="tier-note">'+r.tier_note+'</span>' : '';
-            return '<td'+paidClass+'><span class="tier-pill '+lv+'" data-tv="'+tv+'" onclick="tierQuick(event)" title="点击只看「'+txt+'」，再点一次取消">'+txt+'</span>'+nt+'</td>';
+            let it = r.item || '';
+            return '<td'+paidClass+'><span class="tier-pill '+lv+'" data-tv="'+tv+'" data-item="'+it+'" title="点击修改「'+it+'」的梯队">'+txt+'</span>'+nt+'</td>';
         }
         case 'metric':
             return '<td'+paidClass+'>'+formatMetric(r, col)+'</td>';
@@ -1387,5 +1390,6 @@ if (typeof __M === 'undefined' || typeof __DD === 'undefined' || !Object.keys(__
     loadNotes().then(() => { init(); var _bm = document.getElementById('bootMask'); if (_bm) _bm.style.display = 'none'; });
 }
 </script>
+<script src="tier_edit.js"></script>
 </body>
 </html>

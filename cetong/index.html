@@ -359,6 +359,8 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 <div class="footer">茵曼 2026秋冬测款 v3 | 数据来源: 京东商智日粒度 | 点击表头排序 | 双击图片放大 | 单击行查看近15天趋势</div>
 
 <script src="data.js"></script>
+<script>window.__TIER_CFG={store:'POP',path:'cetong/tier_data.js',repo:'inman-zhongxin/inman-sellthrough-dashboard'};</script>
+<script src="tier_data.js"></script>
 <script>
 // ═══════ 全局配置 ═══════
 let sortColIdx = 8, sortDir = -1; // 默认排序位（主推梯队列插入后 +1，维持原「日均环比」降序）
@@ -939,7 +941,8 @@ function renderCell(r, col) {
             let lv = t ? ((r.tier_rank >= 3) ? 't1' : (r.tier_rank === 2 ? 't2' : 't3')) : 'tn';
             if (tierSel.indexOf(tv) >= 0) lv += ' on';
             let nt = r.tier_note ? '<span class="tier-note">'+r.tier_note+'</span>' : '';
-            return '<td'+paidClass+'><span class="tier-pill '+lv+'" data-tv="'+tv+'" onclick="tierQuick(event)" title="点击只看「'+txt+'」，再点一次取消">'+txt+'</span>'+nt+'</td>';
+            let it = r.item || '';
+            return '<td'+paidClass+'><span class="tier-pill '+lv+'" data-tv="'+tv+'" data-item="'+it+'" title="点击修改「'+it+'」的梯队">'+txt+'</span>'+nt+'</td>';
         }
         case 'metric':
             return '<td'+paidClass+'>'+formatMetric(r, col)+'</td>';
@@ -1348,5 +1351,6 @@ if (typeof __M === 'undefined' || typeof __DD === 'undefined') {
     loadNotes().then(() => { init(); });
 }
 </script>
+<script src="tier_edit.js"></script>
 </body>
 </html>

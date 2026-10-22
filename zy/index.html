@@ -101,6 +101,7 @@ tr:hover{background:#f8fafd}
 .ret-lo{background:#DDF0E8;color:#1B7A5A}
 .ret-mid{background:#F1F4F3;color:#4A5A57}
 .ret-na{color:#C2CCCA;font-size:12px;cursor:help}
+.ret-cap{background:#EDEFF2;color:#6B7785;border:1px dashed #A8B4BE;font-weight:600}
 
 /* 列筛选器 */
 .col-toggle-bar{margin:0 24px 10px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
@@ -1012,10 +1013,16 @@ function renderCell(r, col) {
             let med = (M[r.tag_cat] !== undefined && M[r.tag_cat] !== null) ? M[r.tag_cat] : null;
             let diff = (med === null) ? 0 : v - med;
             let cls = (diff >= 0.08) ? 'ret-hi' : ((diff <= -0.08) ? 'ret-lo' : 'ret-mid');
+            // 源表把「退货率 >= 100%」统一封顶为 1.0。实测这批款销售件数中位仅 2 件、
+            // 件单价 326 元、商品等级全空 → 极小样本算成 100%，不是真实退货水平。
+            // 故不着高退货红色，改中性虚线，避免被读成「这款全退了」。
+            let capped = (v >= 0.995);
+            if (capped) cls = 'ret-cap';
             let tip = '理论退货率 ' + (v*100).toFixed(1) + '%';
             if (med !== null) {
                 tip += '\n本品类理论中位 ' + (med*100).toFixed(1) + '%——本款' + (diff >= 0 ? '高 ' + (diff*100).toFixed(1) : '低 ' + Math.abs(diff*100).toFixed(1)) + 'pp';
             }
+            if (capped) tip += '\n⚠ 源表封顶：退货率算得 >=100% 时统一记 100%，该批款销售件数中位仅 2 件（极小样本），不代表真实退货水平';
             tip += '\n来源：全平台商品日报 2026-09-22~10-22「理论退货率」，按款号匹配。\n商品级静态属性，不随上方日期窗口变化。';
             return '<td class="ret-cell"><span class="ret ' + cls + '" title="' + tip.replace(/"/g,'&quot;') + '">' + (v*100).toFixed(1) + '%</span></td>';
         }

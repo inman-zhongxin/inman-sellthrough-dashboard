@@ -103,6 +103,17 @@ tr:hover{background:#f8fafd}
 .ret-na{color:#C2CCCA;font-size:12px;cursor:help}
 .ret-cap{background:#EDEFF2;color:#6B7785;border:1px dashed #A8B4BE;font-weight:600}
 
+/* 库存（每日快照 · 8 个京东可同步仓 · 不随日期窗口变化） */
+.st-cell{text-align:right;padding-right:8px}
+.st{display:inline-block;padding:1px 5px;border-radius:3px;font-weight:600;font-size:12px;font-variant-numeric:tabular-nums;cursor:help;color:#2C3E50}
+.st-absent{color:#B8C2C8;font-weight:500}
+.st-out{color:#B23A2B;background:#FBE3DE}
+.st-low{color:#B26A2B;background:#FBEFE3}
+.st-d{margin-left:3px;font-size:10px;font-weight:700;opacity:.9}
+.st-dn{color:#1B7A5A}
+.st-up{color:#B23A2B}
+.st-na{color:#C2CCCA;font-size:12px;cursor:help}
+
 /* 列筛选器 */
 .col-toggle-bar{margin:0 24px 10px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
 .col-chip{display:inline-block;padding:2px 8px;border:1px solid #d1d5db;border-radius:12px;font-size:11px;cursor:pointer;user-select:none;background:#f9fafb;color:#777;transition:all .15s}
@@ -380,6 +391,7 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 <script>window.__TIER_CFG={store:'ZY',path:'zy/tier_data.js',repo:'inman-zhongxin/inman-sellthrough-dashboard'};</script>
 <script src="tier_data.js"></script>
 <script src="ret_data.js"></script>
+<script src="stock_data.js"></script>
 <script>
 // ═══════ __DD 列式还原（与构建侧列式编码配套）═══════
 // 还原结果 [[mmdd,uv,gmv,件数,加购,买家,广告花费,广告GMV,点击,展现], ...]，
@@ -429,6 +441,7 @@ const COLS = [
     {id:'cvr', label:'转化率', type:'metric', prev:'prev_cvr', fmt:'pct', vis:true},
     {id:'uv_val', label:'UV价值', type:'metric', prev:'prev_uv_val', fmt:'money', vis:true},
     {id:'ret_rate', label:'退货率', type:'ret', vis:true, width:'86px'},
+    {id:'stock', label:'库存', type:'stock', vis:true, width:'92px'},
     // 付费数据
     {id:'ad_spend', label:'花费', type:'metric', prev:'prev_ad_spend', fmt:'money', vis:true, paid:true, core:true},
     {id:'ad_spend_wow', label:'花费环比', type:'wow', vis:true, paid:true},
@@ -646,6 +659,9 @@ function applyDateRange() {
             th_green: m[9], th_red: m[10], th_uv_min: m[11], th_cart_min: m[12],
             notes: m[13]||'', sale_season: m[14]||'', sale_status: m[15]||'', exclusive_model: m[16]||'',
             ret_rate: retOf(m[0]),
+            stock: stockOf(m[0]),
+            stock_diff: stockDiffOf(m[0]),
+            stock_absent: stockAbsentOf(m[0]),
             week_start: from, week_end: to, days_in_week: a.dc || rangeDays,
             uv: a.u, pv: 0, gmv: a.g, sales: a.sl, cart_users: a.ca, buyers: a.by,
             ad_spend: Math.round(a.as * 100) / 100,
@@ -978,6 +994,24 @@ function retOf(item) {
     return (v === undefined || v === null) ? null : v;
 }
 
+// 库存查表：stock_data.js 的 key 就是本页款号（构建侧已按两店池并集输出，源表无记录记 0）
+function stockOf(item) {
+    if (typeof __STOCK === 'undefined' || !__STOCK || !item) return null;
+    let v = __STOCK[item];
+    return (v === undefined || v === null) ? null : v;
+}
+// 较昨日变化：只在有变化时出现，无变化返回 0
+function stockDiffOf(item) {
+    if (typeof __STOCKDIFF === 'undefined' || !__STOCKDIFF || !item) return 0;
+    let v = __STOCKDIFF[item];
+    return (v === undefined || v === null) ? 0 : v;
+}
+// 源表无该款记录（8 仓可售为 0，货可能在退货质检仓等非可售仓）
+function stockAbsentOf(item) {
+    if (typeof __STOCKABSENT === 'undefined' || !__STOCKABSENT || !item) return false;
+    return __STOCKABSENT.indexOf(item) >= 0;
+}
+
 function renderCell(r, col) {
     let paidClass = col.paid ? ' class="col-paid"' : '';
     switch(col.type) {
@@ -1025,6 +1059,30 @@ function renderCell(r, col) {
             if (capped) tip += '\n⚠ 源表封顶：退货率算得 >=100% 时统一记 100%，该批款销售件数中位仅 2 件（极小样本），不代表真实退货水平';
             tip += '\n来源：全平台商品日报 2026-09-22~10-22「理论退货率」，按款号匹配。\n商品级静态属性，不随上方日期窗口变化。';
             return '<td class="ret-cell"><span class="ret ' + cls + '" title="' + tip.replace(/"/g,'&quot;') + '">' + (v*100).toFixed(1) + '%</span></td>';
+        }
+        case 'stock': {
+            // 库存＝每日「实时库存」快照，按款号汇总 8 个京东可同步仓的「可用库存」
+            // 源表只保留有货的行：查不到 = 可售 0（货可能压在退货质检仓等非可售仓）
+            let q = r.stock;
+            if (q === null || q === undefined) {
+                return '<td class="st-cell"><span class="st-na">—</span></td>';
+            }
+            let scls = 'st';
+            if (r.stock_absent) scls += ' st-absent';
+            else if (q <= 0) scls += ' st-out';
+            else if (q < 20) scls += ' st-low';
+            let sd = r.stock_diff || 0;
+            let sdh = '';
+            if (sd !== 0) {
+                sdh = '<span class="st-d ' + (sd < 0 ? 'st-dn' : 'st-up') + '">' + (sd > 0 ? '+' : '') + sd + '</span>';
+            }
+            let SINF = (typeof __STOCKINFO !== 'undefined' && __STOCKINFO) ? __STOCKINFO : null;
+            let stip = '可售库存 ' + q + ' 件';
+            if (r.stock_absent) stip += '（源表无该款记录：8 仓可售为 0，货可能在退货质检仓等非可售仓）';
+            if (sd !== 0) stip += '\n较昨日 ' + (sd > 0 ? '+' : '') + sd + ' 件（' + (sd < 0 ? '去化/出库' : '补货/入库') + '）';
+            stip += '\n口径：' + ((SINF && SINF.whs) ? SINF.whs.join('、') : '8 个指定仓') + ' 的「可用库存」按款号汇总';
+            stip += '\n库存日期 ' + ((SINF && SINF.date) ? SINF.date : '未知') + '（每日快照，不随上方日期窗口变化）';
+            return '<td class="st-cell"><span class="' + scls + '" title="' + stip.replace(/"/g,'&quot;') + '">' + q + sdh + '</span></td>';
         }
         case 'wow':
             return '<td'+paidClass+'>'+getWow(r[col.id])+'</td>';
@@ -1119,6 +1177,10 @@ function exportExcel() {
                 case 'tier': v = (r.tier || '') + (r.tier_note || ''); break;
                 case 'ret':
                     v = (r.ret_rate === null || r.ret_rate === undefined) ? '' : (r.ret_rate*100).toFixed(1)+'%';
+                    break;
+                case 'stock':
+                    v = (r.stock === null || r.stock === undefined) ? ''
+                        : (String(r.stock) + (r.stock_diff ? '(' + (r.stock_diff > 0 ? '+' : '') + r.stock_diff + ')' : ''));
                     break;
                 case 'metric':
                     v = r[c.id];

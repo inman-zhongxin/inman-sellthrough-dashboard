@@ -94,6 +94,14 @@ tr:hover{background:#f8fafd}
 
 .metric-prev{font-size:10px;color:#aaa;display:block;line-height:1.3}
 
+/* 退货率（理论值 · 按款号匹配 · 不随日期窗口变化） */
+.ret-cell{text-align:center}
+.ret{display:inline-block;padding:1px 6px;border-radius:3px;font-weight:600;font-size:12px;font-variant-numeric:tabular-nums;cursor:help}
+.ret-hi{background:#FBE3DE;color:#B23A2B}
+.ret-lo{background:#DDF0E8;color:#1B7A5A}
+.ret-mid{background:#F1F4F3;color:#4A5A57}
+.ret-na{color:#C2CCCA;font-size:12px;cursor:help}
+
 /* 列筛选器 */
 .col-toggle-bar{margin:0 24px 10px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
 .col-chip{display:inline-block;padding:2px 8px;border:1px solid #d1d5db;border-radius:12px;font-size:11px;cursor:pointer;user-select:none;background:#f9fafb;color:#777;transition:all .15s}
@@ -370,6 +378,7 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 <script src="zy_data.js"></script>
 <script>window.__TIER_CFG={store:'ZY',path:'zy/tier_data.js',repo:'inman-zhongxin/inman-sellthrough-dashboard'};</script>
 <script src="tier_data.js"></script>
+<script src="ret_data.js"></script>
 <script>
 // ═══════ __DD 列式还原（与构建侧列式编码配套）═══════
 // 还原结果 [[mmdd,uv,gmv,件数,加购,买家,广告花费,广告GMV,点击,展现], ...]，
@@ -418,6 +427,7 @@ const COLS = [
     {id:'cart_wow', label:'加购环比', type:'wow', vis:false},
     {id:'cvr', label:'转化率', type:'metric', prev:'prev_cvr', fmt:'pct', vis:true},
     {id:'uv_val', label:'UV价值', type:'metric', prev:'prev_uv_val', fmt:'money', vis:true},
+    {id:'ret_rate', label:'退货率', type:'ret', vis:true, width:'86px'},
     // 付费数据
     {id:'ad_spend', label:'花费', type:'metric', prev:'prev_ad_spend', fmt:'money', vis:true, paid:true, core:true},
     {id:'ad_spend_wow', label:'花费环比', type:'wow', vis:true, paid:true},
@@ -634,6 +644,7 @@ function applyDateRange() {
             img: m[4]||'', w_add_cart: m[5], w_cvr: m[6], w_uv_val: m[7], w_uv: m[8],
             th_green: m[9], th_red: m[10], th_uv_min: m[11], th_cart_min: m[12],
             notes: m[13]||'', sale_season: m[14]||'', sale_status: m[15]||'', exclusive_model: m[16]||'',
+            ret_rate: retOf(m[0]),
             week_start: from, week_end: to, days_in_week: a.dc || rangeDays,
             uv: a.u, pv: 0, gmv: a.g, sales: a.sl, cart_users: a.ca, buyers: a.by,
             ad_spend: Math.round(a.as * 100) / 100,
@@ -959,6 +970,13 @@ function render() {
     }
 }
 
+// 退货率查表：ret_data.js 的 key 就是本页款号，一次精确命中（归一化已在构建侧完成）
+function retOf(item) {
+    if (typeof __RET === 'undefined' || !__RET || !item) return null;
+    let v = __RET[item];
+    return (v === undefined || v === null) ? null : v;
+}
+
 function renderCell(r, col) {
     let paidClass = col.paid ? ' class="col-paid"' : '';
     switch(col.type) {
@@ -983,6 +1001,24 @@ function renderCell(r, col) {
         }
         case 'metric':
             return '<td'+paidClass+'>'+formatMetric(r, col)+'</td>';
+        case 'ret': {
+            // 退货率＝「理论退货率」商品级静态属性，按款号匹配
+            // 着色按「本品类理论值中位数」对比：不同品类天然差 20pp+，跨品类不可比
+            let v = r.ret_rate;
+            if (v === null || v === undefined) {
+                return '<td class="ret-cell"><span class="ret-na" title="该款不在退货率日报内，或理论退货率未测算（日报覆盖 2026-09-22~10-22 有销售的款）">—</span></td>';
+            }
+            let M = (typeof __RETCAT !== 'undefined') ? __RETCAT : {};
+            let med = (M[r.tag_cat] !== undefined && M[r.tag_cat] !== null) ? M[r.tag_cat] : null;
+            let diff = (med === null) ? 0 : v - med;
+            let cls = (diff >= 0.08) ? 'ret-hi' : ((diff <= -0.08) ? 'ret-lo' : 'ret-mid');
+            let tip = '理论退货率 ' + (v*100).toFixed(1) + '%';
+            if (med !== null) {
+                tip += '\n本品类理论中位 ' + (med*100).toFixed(1) + '%——本款' + (diff >= 0 ? '高 ' + (diff*100).toFixed(1) : '低 ' + Math.abs(diff*100).toFixed(1)) + 'pp';
+            }
+            tip += '\n来源：全平台商品日报 2026-09-22~10-22「理论退货率」，按款号匹配。\n商品级静态属性，不随上方日期窗口变化。';
+            return '<td class="ret-cell"><span class="ret ' + cls + '" title="' + tip.replace(/"/g,'&quot;') + '">' + (v*100).toFixed(1) + '%</span></td>';
+        }
         case 'wow':
             return '<td'+paidClass+'>'+getWow(r[col.id])+'</td>';
         case 'notes':
@@ -1074,6 +1110,9 @@ function exportExcel() {
                 case 'score': v = r.score; break;
                 case 'badge': v = r.decision; break;
                 case 'tier': v = (r.tier || '') + (r.tier_note || ''); break;
+                case 'ret':
+                    v = (r.ret_rate === null || r.ret_rate === undefined) ? '' : (r.ret_rate*100).toFixed(1)+'%';
+                    break;
                 case 'metric':
                     v = r[c.id];
                     if (v === null || v === undefined) v = '';

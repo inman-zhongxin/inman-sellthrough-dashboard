@@ -103,7 +103,7 @@ tr:hover{background:#f8fafd}
 .ret-na{color:#C2CCCA;font-size:12px;cursor:help}
 .ret-cap{background:#EDEFF2;color:#6B7785;border:1px dashed #A8B4BE;font-weight:600}
 
-/* 库存（每日快照 · 8 个京东可同步仓 · 不随日期窗口变化） */
+/* 库存（每日快照 · 7 个京东可同步仓 · 不随日期窗口变化） */
 .st-cell{text-align:right;padding-right:8px}
 .st{display:inline-block;padding:1px 5px;border-radius:3px;font-weight:600;font-size:12px;font-variant-numeric:tabular-nums;cursor:help;color:#2C3E50}
 .st-absent{color:#B8C2C8;font-weight:500}
@@ -1061,7 +1061,7 @@ function renderCell(r, col) {
             return '<td class="ret-cell"><span class="ret ' + cls + '" title="' + tip.replace(/"/g,'&quot;') + '">' + (v*100).toFixed(1) + '%</span></td>';
         }
         case 'stock': {
-            // 库存＝每日「实时库存」快照，按款号汇总 8 个京东可同步仓的「可用库存」
+            // 库存＝每日「实时库存」快照，按款号汇总 7 个京东可同步仓的「可用库存」
             // 源表只保留有货的行：查不到 = 可售 0（货可能压在退货质检仓等非可售仓）
             let q = r.stock;
             if (q === null || q === undefined) {
@@ -1080,7 +1080,7 @@ function renderCell(r, col) {
             let stip = '可售库存 ' + q + ' 件';
             if (r.stock_absent) stip += '（源表无该款记录：8 仓可售为 0，货可能在退货质检仓等非可售仓）';
             if (sd !== 0) stip += '\n较昨日 ' + (sd > 0 ? '+' : '') + sd + ' 件（' + (sd < 0 ? '去化/出库' : '补货/入库') + '）';
-            stip += '\n口径：' + ((SINF && SINF.whs) ? SINF.whs.join('、') : '8 个指定仓') + ' 的「可用库存」按款号汇总';
+            stip += '\n口径：' + ((SINF && SINF.whs) ? SINF.whs.join('、') : '7 个指定仓') + ' 的「可用库存」按款号汇总';
             stip += '\n库存日期 ' + ((SINF && SINF.date) ? SINF.date : '未知') + '（每日快照，不随上方日期窗口变化）';
             return '<td class="st-cell"><span class="' + scls + '" title="' + stip.replace(/"/g,'&quot;') + '">' + q + sdh + '</span></td>';
         }

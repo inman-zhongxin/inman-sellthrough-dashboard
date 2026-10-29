@@ -103,6 +103,13 @@ tr:hover{background:#f8fafd}
 .ret-na{color:#C2CCCA;font-size:12px;cursor:help}
 .ret-cap{background:#EDEFF2;color:#6B7785;border:1px dashed #A8B4BE;font-weight:600}
 
+/* 盈利水平（毛利率 − 广告费费率 − 平台固定费率 · 随日期窗口联动） */
+.profit-cell{text-align:right;padding-right:8px}
+.profit{display:inline-block;padding:1px 5px;border-radius:3px;font-weight:700;font-size:12px;font-variant-numeric:tabular-nums;cursor:help}
+.profit-pos{background:#FBE3DE;color:#B23A2B}
+.profit-neg{background:#DDF0E8;color:#1B7A5A}
+.profit-na{color:#C2CCCA;font-size:12px;cursor:help}
+
 /* 库存（每日快照 · 7 个京东可同步仓 · 不随日期窗口变化） */
 .st-cell{text-align:right;padding-right:8px}
 .st{display:inline-block;padding:1px 5px;border-radius:3px;font-weight:600;font-size:12px;font-variant-numeric:tabular-nums;cursor:help;color:#2C3E50}
@@ -458,6 +465,7 @@ const COLS = [
     {id:'cvr', label:'转化率', type:'metric', prev:'prev_cvr', fmt:'pct', vis:true},
     {id:'uv_val', label:'UV价值', type:'metric', prev:'prev_uv_val', fmt:'money', vis:true},
     {id:'ret_rate', label:'退货率', type:'ret', vis:true, width:'86px'},
+    {id:'profit', label:'盈利水平', type:'profit', vis:true, width:'92px'},
     {id:'stock', label:'库存', type:'stock', vis:true, width:'92px'},
     // 付费数据
     {id:'ad_spend', label:'花费', type:'metric', prev:'prev_ad_spend', fmt:'money', vis:true, paid:true, core:true},
@@ -712,6 +720,9 @@ function applyDateRange() {
         r.avg_daily_spend = Math.round(r.ad_spend / rangeDays);
         r.avg_daily_clicks = Math.round(r.ad_clicks / rangeDays);
         r.ad_roi = r.ad_spend > 0 ? Math.round(r.ad_gmv / r.ad_spend * 10) / 10 : 0;
+        let _pp = calcProfit(r);
+        r.profit = _pp ? _pp.profit : null;
+        r.profit_parts = _pp;
     }
     
     currentData = Object.values(aggBySpu);
@@ -1027,6 +1038,25 @@ function retOf(item) {
     return (v === undefined || v === null) ? null : v;
 }
 
+// 盈利水平 = 毛利率 − 广告费费率(对实收) − 平台固定费率（同款对比两店渠道效率）
+// 毛利率: 标签表静态 1−成本/线上最低到手价，构建侧已做类目/全店兜底（__PROF 值单位 = %）
+// 广告费费率 = 窗口消耗广告费 ÷ 实收到账；实收到账 = 窗口GMV × (1 − 理论退货率)，退货率倒退测算
+// 退货率缺失 → 本结构类目 TOP100 加权理论退货率兜底（与结构表退货率列同口径）
+const PROF_FIXED = 12.7;   // 自营: 扣点 12.7%（固定费率，无CPS佣金）
+function calcProfit(r) {
+    let P = (typeof __PROF !== 'undefined') ? __PROF : {};
+    let margin = (P[r.item] !== undefined && P[r.item] !== null) ? P[r.item] : null;
+    if (margin === null || !r.gmv || r.gmv <= 0) return null;
+    let ret = r.ret_rate;
+    if (ret === null || ret === undefined) {
+        let S = (typeof __STRET !== 'undefined') ? __STRET : {};
+        ret = (S[r.v5_cat] !== undefined && S[r.v5_cat] !== null) ? S[r.v5_cat] : 0;
+    }
+    if (ret >= 1) ret = 0.995;   // 源表封顶值防护，避免除零
+    let fee = ret < 1 ? (r.ad_spend || 0) / (r.gmv * (1 - ret)) * 100 : 0;
+    return { margin: margin, fee: fee, ret: ret, profit: margin - fee - PROF_FIXED };
+}
+
 // 库存查表：stock_data.js 的 key 就是本页款号（构建侧已按两店池并集输出，源表无记录记 0）
 function stockOf(item) {
     if (typeof __STOCK === 'undefined' || !__STOCK || !item) return null;
@@ -1092,6 +1122,22 @@ function renderCell(r, col) {
             if (capped) tip += '\n⚠ 源表封顶：退货率算得 >=100% 时统一记 100%，该批款销售件数中位仅 2 件（极小样本），不代表真实退货水平';
             tip += '\n来源：全平台商品日报 2026-09-22~10-22「理论退货率」，按款号匹配。\n商品级静态属性，不随上方日期窗口变化。';
             return '<td class="ret-cell"><span class="ret ' + cls + '" title="' + tip.replace(/"/g,'&quot;') + '">' + (v*100).toFixed(1) + '%</span></td>';
+        }
+        case 'profit': {
+            // 盈利水平 = 毛利率 − 广告费费率(对实收) − 扣点；同款对比两边渠道效率
+            let v = r.profit;
+            if (v === null || v === undefined) {
+                return '<td class="profit-cell"><span class="profit-na" title="毛利率未知（款号不在标签表且无类目可兜底）或窗口无成交">—</span></td>';
+            }
+            let pp = r.profit_parts || {};
+            let cls = (v >= 0) ? 'profit-pos' : 'profit-neg';
+            let tip = '盈利水平 = 毛利率 − 广告费费率 − 扣点';
+            tip += '\n毛利率 ' + (pp.margin !== undefined && pp.margin !== null ? pp.margin.toFixed(1) : '—') + '%（标签表静态：1 − 成本 ÷ 线上最低到手价）';
+            tip += '\n广告费费率 ' + (pp.fee !== undefined && pp.fee !== null ? pp.fee.toFixed(1) : '—') + '%（窗口消耗广告费 ÷ 实收到账）';
+            tip += '\n实收到账 = 窗口GMV × (1 − 理论退货率 ' + ((pp.ret !== undefined && pp.ret !== null) ? (pp.ret*100).toFixed(1) : '—') + '%)，用退货率倒退测算';
+            tip += '\n扣点 12.7%（固定，无CPS佣金）';
+            tip += '\n随上方日期窗口联动；毛利率/退货率为静态属性。正=盈利(红)，负=亏损(绿)';
+            return '<td class="profit-cell"><span class="' + cls + '" title="' + tip.replace(/"/g,'&quot;') + '">' + v.toFixed(1) + '%</span></td>';
         }
         case 'stock': {
             // 库存＝每日「实时库存」快照，按款号汇总 7 个京东可同步仓的「可用库存」
@@ -1214,6 +1260,9 @@ function exportExcel() {
                 case 'stock':
                     v = (r.stock === null || r.stock === undefined) ? ''
                         : (String(r.stock) + (r.stock_diff ? '(' + (r.stock_diff > 0 ? '+' : '') + r.stock_diff + ')' : ''));
+                    break;
+                case 'profit':
+                    v = (r.profit === null || r.profit === undefined) ? '' : r.profit.toFixed(1)+'%';
                     break;
                 case 'metric':
                     v = r[c.id];

@@ -581,7 +581,7 @@ function renderStruct() {
                 const v = RC[n];
                 if (typeof v === 'number' && agg26[n][0] > 0) { rn += agg26[n][0] * v; rd += agg26[n][0]; }
             });
-            retTot = rd > 0 ? rn / rd : null;
+            retTot = rd > 0 ? rn / rd * 100 : null;
         }
         const rows = names.filter(n => agg26[n][0] > 0 || agg25[n][0] > 0 || agg26[n][1] > 0 || agg25[n][1] > 0)
             .map(n => {

@@ -686,6 +686,21 @@ function applyDateRange() {
     let fd = new Date(from + 'T00:00:00');
     let td = new Date(to + 'T00:00:00');
     rangeDays = Math.round((td - fd) / 86400000) + 1;
+    // ★ 全店窗口内「真实有数据的天数」：源表缺日（未导出）时日历天数会虚高，
+    //   用日历天数当分母会把日均算低（6天数据/7天日历 → 偏低 14%）。
+    //   ⚠️ 不能用单款 a.dc：零流量日已被剔除，会让长尾款日均虚高。
+    //   优先用 __ST.d26（全店结构日表）；缺失时回退日历天数。
+    let dataDays = (function(){
+        try {
+            if (typeof __ST === 'undefined' || !__ST || !__ST.d26) return rangeDays;
+            const _f = from.replace(/-/g,''), _t = to.replace(/-/g,'');
+            const _n = Object.keys(__ST.d26).filter(k => {
+                const kk = String(k).replace(/-/g,'');
+                return kk >= _f && kk <= _t;
+            }).length;
+            return _n > 0 ? _n : rangeDays;
+        } catch(e) { return rangeDays; }
+    })();
     
     for (let spu in __DD) {
         let m = __M[spu];
@@ -719,10 +734,10 @@ function applyDateRange() {
         // ★ 日均分母用「真实有数据天数」a.dc（aggregateDaily 返回），
         //   而非日历天数 rangeDays：窗口内若有缺日（源表未导出），
         //   用日历天数当分母会把日均算低（如 6 天数据 / 7 天日历 → 偏低 14%）。
-        let _dc = a.dc || rangeDays;
-        r.avg_daily_uv = Math.round(r.uv / _dc);
-        r.avg_daily_spend = Math.round(r.ad_spend / _dc);
-        r.avg_daily_clicks = Math.round(r.ad_clicks / _dc);
+        // ★ 日均分母用全店有效天数 dataDays（非日历天数，避免缺日时偏低）
+        r.avg_daily_uv = Math.round(r.uv / dataDays);
+        r.avg_daily_spend = Math.round(r.ad_spend / dataDays);
+        r.avg_daily_clicks = Math.round(r.ad_clicks / dataDays);
         r.ad_roi = r.ad_spend > 0 ? Math.round(r.ad_gmv / r.ad_spend * 10) / 10 : 0;
         let _pp = calcProfit(r);
         r.profit = _pp ? _pp.profit : null;
@@ -751,7 +766,7 @@ function applyDateRange() {
         let puv = pa.u || 1;
         let p_ad_spend = Math.round(pa.as * 100) / 100;
         r.prev_uv = pa.u;
-        r.prev_avg_uv = Math.round(pa.u / (pa.dc || rangeDays));
+        r.prev_avg_uv = Math.round(pa.u / dataDays);
         r.avg_uv_wow = r.prev_avg_uv > 0 ? (r.avg_daily_uv - r.prev_avg_uv) / r.prev_avg_uv : null;
         r.prev_gmv = pa.g;
         r.prev_sales = pa.sl;
@@ -762,8 +777,8 @@ function applyDateRange() {
         r.prev_ad_spend = p_ad_spend;
         r.prev_ad_gmv = Math.round(pa.ag * 100) / 100;
         r.prev_ad_clicks = pa.ac;
-        r.prev_avg_daily_spend = Math.round(pa.as / (pa.dc || rangeDays));
-        r.prev_avg_daily_clicks = Math.round(pa.ac / (pa.dc || rangeDays));
+        r.prev_avg_daily_spend = Math.round(pa.as / dataDays);
+        r.prev_avg_daily_clicks = Math.round(pa.ac / dataDays);
         r.prev_ad_roi = pa.as > 0 ? Math.round(pa.ag / pa.as * 10) / 10 : null;
         r.ad_spend_wow = pa.as > 0 ? (r.ad_spend - pa.as) / pa.as : null;
         r.ad_gmv_wow = pa.ag > 0 ? (r.ad_gmv - pa.ag) / pa.ag : null;

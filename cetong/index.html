@@ -179,6 +179,28 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 
 .footer{text-align:center;padding:16px;font-size:10px;color:#aaa}
 .note{background:#fef9c3;border-left:4px solid #eab308;padding:8px 14px;border-radius:4px;font-size:11px;margin:0 24px 12px}
+
+/* 主推款目标毛利增量卡片 */
+.target-uplift-wrap{margin:0 24px 14px;border:1px solid #d4e6d4;border-radius:8px;overflow:hidden;background:#f6fdf6;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.tu-head{padding:9px 16px;background:linear-gradient(135deg,#15803d,#22a35e);color:#fff;font-size:12.5px;font-weight:700}
+.tu-grid{display:flex;gap:0;padding:10px 14px;flex-wrap:wrap}
+.tu-card{flex:1;min-width:90px;text-align:center;padding:8px 6px}
+.tu-card+.tu-card{border-left:1px solid #d4e6d4}
+.tu-v{font-size:22px;font-weight:800;color:#15803d;line-height:1.2}
+.tu-hl .tu-v{color:#dc2626}
+.tu-l{font-size:10px;color:#6b7280;margin-top:2px}
+.tu-foot{padding:5px 14px 7px;font-size:10px;color:#9aa5b1;border-top:1px dashed #d4e6d4;display:flex;flex-wrap:wrap;gap:4px 10px}
+.tuc{background:#eef4fb;color:#1f4e79;border-radius:3px;padding:1px 6px;font-size:10px;font-weight:600;white-space:nowrap}
+
+/* 目标进度列 */
+.tg-bar{display:inline-block;height:14px;border-radius:7px;background:#e5e7eb;min-width:60px;vertical-align:middle;position:relative;overflow:hidden}
+.tg-fill{height:100%;border-radius:7px;transition:width .3s}
+.tg-fill.lo{background:#fca5a5}
+.tg-fill.mid{background:#fcd34d}
+.tg-fill.hi{background:#86efac}
+.tg-fill.done{background:#4ade80}
+.tg-txt{font-size:10px;margin-left:5px;color:#6b7280;vertical-align:middle}
+.tg-target{font-size:10px;color:#9aa5b1;margin-left:2px}
 </style>
 </head>
 <body>
@@ -231,7 +253,7 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 </div>
 </div>
 
-<div class="ops-wrap">
+<div class="target-uplift-wrap"><div class="tu-head">📦 主推款目标进度追踪 · 毛利增量预估</div><div class="tu-grid"><div class="tu-card"><div class="tu-v">5,045</div><div class="tu-l">总目标(件)</div></div><div class="tu-card"><div class="tu-v">197</div><div class="tu-l">已售 11.12-17</div></div><div class="tu-card"><div class="tu-v">3.9%</div><div class="tu-l">目标进度</div></div><div class="tu-card"><div class="tu-v">4,848</div><div class="tu-l">剩余(13天)</div></div><div class="tu-card tu-hl"><div class="tu-v">¥1,063,899</div><div class="tu-l">💰 达成可增毛利</div></div></div><div class="tu-foot">品类毛利分布: <span class="tuc">羽绒服 ¥387,380</span><span class="tuc">双面呢外套 ¥228,389</span><span class="tuc">(仿)毛衣 ¥161,404</span><span class="tuc">T恤 ¥61,839</span><span class="tuc">裤子 ¥58,246</span> ｜ 47/47 款匹配 | 件单价×利润率×剩余件数估算</div></div><div class="ops-wrap">
 <style>.ops-wrap{margin:0 24px 14px;border:1px solid #d9e2ec;border-radius:8px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.06)}summary.ops-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 16px;background:linear-gradient(135deg,#1a3a5c,#2d6a9f);color:#fff;font-size:13px;font-weight:700;cursor:pointer;list-style:none}summary.ops-head::-webkit-details-marker{display:none}.ops-arr{display:inline-block;font-size:10px;margin-left:8px;opacity:.9;transition:transform .15s}details[open] .ops-arr{transform:rotate(90deg)}.ops-meta{font-size:10px;font-weight:400;opacity:.85}.ops-grid{display:grid;grid-template-columns:repeat(3,1fr)}.ops-col{padding:9px 13px 11px;font-size:11.5px;line-height:1.62;color:#374151}.ops-col+.ops-col{border-left:1px dashed #e8edf3}.ops-c1{border-top:3px solid #2d6a9f}.ops-c2{border-top:3px solid #d97706}.ops-c3{border-top:3px solid #15803d}.ops-ct{font-size:12px;font-weight:700;margin-bottom:5px}.ops-c1 .ops-ct{color:#1f4e79}.ops-c2 .ops-ct{color:#b45309}.ops-c3 .ops-ct{color:#15803d}.ops-col ul{margin:0;padding:0;list-style:none}.ops-col li{position:relative;padding-left:11px;margin-bottom:6px}.ops-col li:last-child{margin-bottom:0}.ops-col li:before{content:'';position:absolute;left:1px;top:7px;width:4px;height:4px;border-radius:50%}.ops-c1 li:before{background:#2d6a9f}.ops-c2 li:before{background:#d97706}.ops-c3 li:before{background:#15803d}.ops-up{color:#dc2626;font-weight:700}.ops-down{color:#16a34a;font-weight:700}.ops-item{color:#1f4e79;font-weight:700;background:#eef4fb;border-radius:3px;padding:0 4px}.ops-foot{padding:6px 14px 8px;font-size:10px;color:#9aa5b1;border-top:1px dashed #e8edf3}@media(max-width:980px){.ops-grid{grid-template-columns:1fr}.ops-col+.ops-col{border-left:none;border-top:1px dashed #e8edf3}}</style>
 <details open>
 <summary class="ops-head"><span>🎯 运营建议 · 数据诊断 → 问题归因 → 调整方案<span class="ops-arr">▶</span></span><span class="ops-meta">数据窗口 近7天 11/12–11/18 · 近30天 10/20–11/18 vs 25年同期 · 新品近15天加购 · 11-19 生成</span></summary>
@@ -323,6 +345,8 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 </div>
 </div>
 
+<label style="margin-left:4px"><input type="checkbox" id="filterTarget" onchange="render()" style="vertical-align:middle;margin:0 3px 0 0">仅看主推款</label>
+
 <label>季节:</label>
 <select id="filterSeason" onchange="render()">
 <option value="">全部</option><option value="春季">春季</option><option value="秋季">秋季</option><option value="冬季">冬季</option><option value="全季">全季</option>
@@ -390,6 +414,7 @@ th.col-paid{color:#000}  /* 付费表头黑色字体 */
 <script src="tier_data.js"></script>
 <script src="ret_data.js"></script>
 <script src="stock_data.js"></script>
+<script src="target_data.js"></script>
 <script>
 // ═══════ 全局配置 ═══════
 let sortColIdx = 8, sortDir = -1; // 默认排序位（主推梯队列插入后 +1，维持原「日均环比」降序）
@@ -435,6 +460,7 @@ const COLS = [
     {id:'ret_rate', label:'退货率', type:'ret', vis:true, width:'86px'},
     {id:'profit', label:'盈利水平', type:'profit', vis:true, width:'92px'},
     {id:'stock', label:'库存', type:'stock', vis:true, width:'92px'},
+    {id:'target', label:'目标进度', type:'target', vis:true, width:'110px'},
     // 付费数据
     {id:'ad_spend', label:'花费', type:'metric', prev:'prev_ad_spend', fmt:'money', vis:true, paid:true, core:true},
     {id:'ad_spend_wow', label:'花费环比', type:'wow', vis:true, paid:true},
@@ -908,6 +934,9 @@ function getFilteredData() {
     if (status) filtered = filtered.filter(r => r.sale_status && r.sale_status === status);
     if (exclusive) filtered = filtered.filter(r => r.exclusive_model && r.exclusive_model === exclusive);
     if (tierSel.length) filtered = filtered.filter(r => tierSel.indexOf(r.tier || '__none__') >= 0);
+    if (document.getElementById('filterTarget') && document.getElementById('filterTarget').checked) {
+        filtered = filtered.filter(r => (typeof __TARGET !== 'undefined' && __TARGET) ? (r.item in __TARGET) : false);
+    }
     if (minScore > 0) filtered = filtered.filter(r => r.score >= minScore);
     if (search) filtered = filtered.filter(r => r.item.toLowerCase().includes(search));
     return filtered;
@@ -926,8 +955,12 @@ function onSearchInput() {
 }
 
 function getFilterSig() {
-    return ['filterCat','filterLabel','filterDecision','filterSeason','filterStatus','filterExclusive','filterMinScore','filterSearch']
-        .map(id => document.getElementById(id).value).join('|') + '|T:' + tierSel.slice().sort().join(',');
+    return ['filterCat','filterLabel','filterDecision','filterSeason','filterStatus','filterExclusive','filterMinScore','filterSearch','filterTarget']
+        .map(id => {
+            let el = document.getElementById(id);
+            if (!el) return '';
+            return el.type === 'checkbox' ? (el.checked ? '1' : '0') : el.value;
+        }).join('|') + '|T:' + tierSel.slice().sort().join(',');
 }
 
 function goPage(n) {
@@ -1143,6 +1176,23 @@ function renderCell(r, col) {
         }
         case 'wow':
             return '<td'+paidClass+'>'+getWow(r[col.id])+'</td>';
+        case 'target': {
+            // 目标进度：从 __TARGET 读取款号的目标数据，显示进度条
+            let code = r.item;
+            let tg = (typeof __TARGET !== 'undefined' && __TARGET) ? __TARGET[code] : null;
+            if (!tg) return '<td'+paidClass+'><span class="tg-na" style="color:#ccc;font-size:10px">—</span></td>';
+            let pct = tg.p || 0;
+            let sold = tg.s || 0;
+            let target = tg.t || 0;
+            let remain = tg.r || 0;
+            let daily = tg.d || 0;
+            let cls = pct >= 50 ? 'done' : (pct >= 25 ? 'hi' : (pct >= 10 ? 'mid' : 'lo'));
+            let tip = '目标 ' + target + '件 | 已售 ' + sold + '件 | 剩余 ' + remain + '件 | 日均需售 ' + daily + '件';
+            return '<td'+paidClass+' title="' + tip + '">'
+                + '<span class="tg-bar"><span class="tg-fill ' + cls + '" style="width:' + Math.min(pct,100) + '%"></span></span>'
+                + '<span class="tg-txt">' + pct + '%</span>'
+                + '<span class="tg-target">/' + target + '件</span></td>';
+        }
         case 'notes':
             return '<td'+paidClass+' style="padding:2px 4px"><input class="note-input" value="'+(r.notes||'')+'" data-spu="'+r.spu+'" onchange="saveNote(this)" placeholder="..." style="width:100%;border:1px solid #e5e7eb;border-radius:3px;padding:3px 5px;font-size:11px;background:transparent"></td>';
         default:
